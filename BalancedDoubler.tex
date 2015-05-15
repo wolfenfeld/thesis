@@ -1,0 +1,35 @@
+\IncMargin{1em}
+\begin{algorithm}
+
+\SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
+
+\Input{$x_1$ fixed in $X, \mathcal{L} = \{x_1\}$}
+
+\BlankLine
+\emph{Initialization}\\
+$p\leftarrow 1$\\
+\While{True}{
+	Play each arm $\frac{k}{\Delta}$ times \\
+	\For{$t = 2^{p-1}$ \KwTo $2^{p}$}{\label{forins}
+		choose $x_t$ uniformly from $\mathcal{L}$\\
+		$y_t \leftarrow argmax_i
+			\left(
+				\frac{1}{p}\sum\limits_{j=1}^{p}\frac{1}{n_{i,j}}
+						   \sum\limits_{t\in T_{i,j}} b_t
+				+
+				\sqrt{
+					\alpha\cdot\log(t)
+					\cdot(
+						\sum\limits_{j=1}^{p}\frac{1}{n_{i,j}}
+						)/p^2
+					}
+			\right)$\\
+		play $(x_t , y_t)$, observe choice $b_t$\\
+		update $(y_t)$ \\
+		}
+	$\mathcal{L} \leftarrow$the multi-set of arms played as y t in the last for-loop.\\
+	$p \rightarrow p+1$
+}
+\caption{Balanced Doubler}\label{algo_disjdecomp}
+\end{algorithm}
+\DecMargin{1em}

@@ -1,0 +1,30 @@
+\IncMargin{1em}
+\begin{algorithm}
+
+\SetKwData{Left}{left}\SetKwData{This}{this}\SetKwData{Up}{up}
+\SetKwFunction{Union}{Union}\SetKwFunction{FindCompress}{FindCompress}
+\SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
+\Input{$T$,$X=\{x_1,..., x_K\},N, c_{\delta, \gamma}(\cdot)$}
+$ \mathcal{P} = X $\\
+$ \forall x \in \mathcal{P} , n_x \leftarrow 0 $\\
+$ \forall x \in \mathcal{P} , w_x \leftarrow 0 $\\
+$ \forall x \in \mathcal{P} ,\hat{P}_x = w_x / n_x$ or $0$ if $n_x = 0 $\\
+$ n^*  = \min_{x \in \mathcal{P}} n_x$\\
+$ c^* = c_{\delta, \gamma}(n^*) $ or $1$ if $ n^* = 0$\\
+$t \leftarrow 0$ \\
+\BlankLine
+\While{$|\mathcal{P}|>1 \wedge t<T \wedge n<N$}{
+	$x_t \leftarrow argmin_{x \in \mathcal{P}} n_x$\\
+	select $y_t\in \mathcal{P}$ at random, compare $x_t$ with $y_t$\\
+	\If{$x_t$ wins}{$w_{x_t}\leftarrow w_{x_t} +1$\\}
+	$n_{x_t} \leftarrow n_{x_t}+1$\\ 
+	\If{$ min_{y_t\in W} (\hat{P}_{y_t})+c^* \leq max_{y_t \in \mathcal{P}}(\hat{P}_{y_t})-c^*$}{
+		$ y_t \leftarrow argmin_{x\in \mathcal{P}} \hat{P}_{x} $\\
+		$ \forall x \in \mathcal{P}$ delete comparison with $y_t$ from $w_x, n_x$\\
+		$ \mathcal{P} \leftarrow \mathcal{P}\backslash\{y_t\} $\\
+	} 
+	$t \leftarrow t+1$
+}
+\caption{Beat The Mean Bandit}\label{algo_disjdecomp}
+\end{algorithm}
+\DecMargin{1em}

@@ -1,0 +1,20 @@
+\IncMargin{1em}
+\begin{algorithm}
+
+\SetKwData{Left}{left}\SetKwData{This}{this}\SetKwData{Up}{up}
+\SetKwFunction{Union}{Union}\SetKwFunction{FindCompress}{FindCompress}
+\SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
+\Input{$X = \{x_1,..., x_K\},\alpha >1/2,T \in \{1,2,... \}\cap \{\infty\}$}
+$ W = [w_{x,y}]\leftarrow 0_{K \times K} $\\
+\BlankLine
+\For{$t =1,2..,T $}{
+	$U = [u_{x,y}] \leftarrow \frac{W}{W+W^T} +\sqrt{\frac{\alpha \cdot \ln(t)}{W+W^T}}$ \\
+	$u_{x,x} \leftarrow 0 $ for each $x \in \{x_1,..., x_K\}$\\
+	Pick any $x_t$ that satisfies $u_{x_t,x} \geq 1/2, \forall x$.\\
+	If no $x_t$ exists pic $x_t$ randomly from $X$.\\
+	$y_t \leftarrow argmax_{x} u_{x,x_t}$\\
+	Compare arms $x_t$ and $y_t$ and increment $w_{x_t, y_t}$ or $w_{y_t, x_t}$ depending on which arm won. 
+} 
+\caption{RUCB}\label{algo_disjdecomp}
+\end{algorithm}
+\DecMargin{1em}

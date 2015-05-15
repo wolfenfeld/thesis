@@ -1,0 +1,25 @@
+\IncMargin{1em}
+\begin{algorithm}
+
+\SetKwData{Left}{left}\SetKwData{This}{this}\SetKwData{Up}{up}
+\SetKwFunction{Union}{Union}\SetKwFunction{FindCompress}{FindCompress}
+\SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
+\Input{$X = \{x_1,..., x_K\},\alpha >1/2,T \in \{1,2,... \}\cap \{\infty\}$}
+$ W = [w_{x,y}]\leftarrow 0_{K \times K} $\\
+\BlankLine
+\For{$t =1,2..,T $}{
+	$\Theta(t) = \frac{\mathds{1}_{K\times K}}{2}$\\
+	\For{$x_i,x_j\in X$ s.t. $i<j$}{
+		 $\Theta_{x_i,x_j}(t) \sim Beta(w_{x_i,x_j}+1,w_{x_j,x_i}+1 )$\\
+		 $\Theta_{x_j,x_i}(t) = 1-\Theta_{x_i,x_j}(t)$
+		 }
+	Pick any $x_t$ that satisfies $\Theta_{x_t,x} \geq 1/2, \forall x$.\\ 
+	If no $x_t$ exists pic $x_t$ that was chosen list often.\\
+	$U = [u_{x_i,x_j}]\leftarrow \frac{W}{W+W^T} +\sqrt{\frac{\alpha \cdot \ln(t)}{W+W^T}}$ \\
+	$U_{x_i,x_i} \leftarrow 0 $ for each $x_i \in X$\\
+	$y_t \leftarrow argmax_{y} u_{y,x_t}$\\
+	Compare arms $x_t$ and $y_t$ and increment $w_{x_t, y_t}$ or $w_{y_t, x_t}$ depending on which arm won. 
+}' 
+\caption{RCS}\label{algo_disjdecomp}
+\end{algorithm}
+\DecMargin{1em}

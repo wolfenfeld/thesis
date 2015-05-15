@@ -1,0 +1,34 @@
+\IncMargin{1em}
+\begin{algorithm}
+
+\SetKwData{Left}{left}\SetKwData{This}{this}\SetKwData{Up}{up}
+\SetKwFunction{Union}{Union}\SetKwFunction{FindCompress}{FindCompress}
+\SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
+\Input{$X = \{x_1,..x_K \}, \delta$}
+$ \mathcal{P} \leftarrow X $\\
+%$ \forall x_i \in \mathcal{P}$:$\hat{\mu}_{x_i}\leftarrow 1/2, n_{x_i}\leftarrow 0 $\\
+$ \forall x \in \mathcal{P} , n_x \leftarrow 0 $\\
+$ \forall x \in \mathcal{P} , w_x \leftarrow 0 $\\
+$ \hat{Q}_{x,y} = 1_{K \times K} $
+%$ \mathcal{H} \leftarrow \mathcal{H}_0$\\
+\BlankLine
+\While{$|\mathcal{P}|>1 \wedge t<T $}{
+	$x_t \leftarrow argmax_{x,y \in \mathcal{P}} \sum_x Q_{x,y} \geq 1/2$\\
+	$\hat{\mu}_{x_t}\leftarrow
+	(1-\frac{1}{t_i})\hat{\mu}_{x_t}+\frac{1}{t_i}x_t$\\
+	$\mathcal{H} \leftarrow \mathcal{H} \cap \left\{
+		x \mid |x_t-\hat{\mu}_{x_t}| < 
+		\sqrt{
+			\frac{1}{2t_{x_t}} 
+			\log\left(
+				\frac{\eta \left(t_{x_t}\right)}
+					 {\delta}
+				\right)
+			}	
+	\right\}$\\
+	$\mathcal{P} \leftarrow \mathcal{P}\setminus \{ x  \mid\text{Indep}(f,\mathcal{H},x) \}$\\
+	$ t \leftarrow t+1$
+} 
+\caption{SAVAGE}\label{algo_disjdecomp}
+\end{algorithm}
+\DecMargin{1em}

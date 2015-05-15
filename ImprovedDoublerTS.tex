@@ -1,0 +1,28 @@
+\IncMargin{1em}
+\begin{algorithm}
+
+\SetKwData{Left}{left}\SetKwData{This}{this}\SetKwData{Up}{up}
+\SetKwFunction{Union}{Union}\SetKwFunction{FindCompress}{FindCompress}
+\SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
+
+\Input{$x_1$ fixed in $X, \mathcal{L} = \{x_1\}$, $\hat{f_0} = 0$,$\mathcal{S}$}
+
+
+\BlankLine
+\emph{Initialization}\\
+$p\leftarrow 1$\\
+\While{True}{
+	\For{$t = 2^{p-1}$ \KwTo $2^{p}$}{\label{forins}
+		choose $x_t$ uniformly from $\mathcal{L}$\\
+		$\forall i \in [1..K] \Theta_{R,i} \sim Beta(Success_{R,i}+1, Fails_{R,i}+1)$\\
+		$y_t\leftarrow argmax(\Theta_{R,i})$)\\
+		play $(x_t , y_t )$, observe choice $b_t$\\
+		$Success_{R,y_t} \leftarrow Success_{R,y_t} + \mathbbm{1}_{b_t=1}$\\
+		$Fails_{R,y_t} \leftarrow Fails_{R,y_t} + \mathbbm{1}_{b_t=0}$\\	
+	}
+	$\mathcal{L} \leftarrow$the multi-set of arms played as y t in the last for-loop.\\
+	$p \rightarrow p+1$
+}
+\caption{Unforgetful Thompson Sampling Doubler}\label{algo_disjdecomp}
+\end{algorithm}
+\DecMargin{1em}

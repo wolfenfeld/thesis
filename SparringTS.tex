@@ -1,0 +1,28 @@
+\IncMargin{1em}
+\begin{algorithm}
+
+\SetKwData{Left}{left}\SetKwData{This}{this}\SetKwData{Up}{up}
+\SetKwFunction{Union}{Union}\SetKwFunction{FindCompress}{FindCompress}
+\SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
+
+\Input{$X, \mathcal{L} = \{x_1\}$, $\hat{f_0} = 0, \mathcal{S}_R, \mathcal{S}_L$}
+
+
+\BlankLine
+$t\leftarrow 1$\\
+\While{True}{
+	$\forall i \in [1..K] \Theta_{L,i} \sim Beta(Success_{L,i}+1, Fails_{L,i}+1)$\\
+	$\forall i \in [1..K] \Theta_{R,i} \sim Beta(Success_{R,i}+1, Fails_{R,i}+1)$\\
+	$x_t\leftarrow argmax(\Theta_{L,i})$,
+	$y_t\leftarrow argmax(\Theta_{R,i})$\\
+	play($x_t, y_t$)\\
+	observe $b_t$\\
+	$Success_{L,x_t} \leftarrow Success_{L,x_t} + \mathbbm{1}_{b_t=0}$\\
+	$Fails_{L,x_t} \leftarrow Fails_{L,x_t} + \mathbbm{1}_{b_t=1}$\\
+	$Success_{R,y_t} \leftarrow Success_{R,y_t} + \mathbbm{1}_{b_t=1}$\\
+	$Fails_{R,y_t} \leftarrow Fails_{R,y_t} + \mathbbm{1}_{b_t=0}$\\	
+	$t\rightarrow t+1$\\
+}
+\caption{Sparring with Thompson Sampling}\label{algo_disjdecomp}
+\end{algorithm}
+\DecMargin{1em}

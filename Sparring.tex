@@ -1,0 +1,23 @@
+\IncMargin{1em}
+\begin{algorithm}
+
+\SetKwData{Left}{left}\SetKwData{This}{this}\SetKwData{Up}{up}
+\SetKwFunction{Union}{Union}\SetKwFunction{FindCompress}{FindCompress}
+\SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
+
+\Input{$X, \mathcal{L} = \{x_1\}$, $\hat{f_0} = 0, \mathcal{S}_R, \mathcal{S}_L$}
+
+\BlankLine
+$t\leftarrow 1$\\
+\While{True}{
+	$x_t\leftarrow$ advance($\mathcal{S}_L$),
+	$y_t\leftarrow$ advance($\mathcal{S}_R$)\\
+	play($x_t, y_t$)\\
+	observe $b_t$\\
+	feedback($\mathcal{S}_L$, $\mathbbm{1}_{b_t=0}$)\\
+	feedback($\mathcal{S}_R$, $\mathbbm{1}_{b_t=1}$)\\	
+	$t\rightarrow t+1$\\
+}
+\caption{Sparring}\label{algo_disjdecomp}
+\end{algorithm}
+\DecMargin{1em}

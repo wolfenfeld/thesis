@@ -1,0 +1,28 @@
+\IncMargin{1em}
+\begin{algorithm}
+
+\SetKwData{Left}{left}\SetKwData{This}{this}\SetKwData{Up}{up}
+\SetKwFunction{Union}{Union}\SetKwFunction{FindCompress}{FindCompress}
+\SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
+
+\Input{$X, \mathcal{L} = \{x_1\}$, $\hat{f_0} = 0, \mathcal{S}$}
+
+
+\BlankLine
+\emph{Initialization}\\
+$p\leftarrow 1$\\
+\While{True}{
+	\emph{For each epoch}\\
+	reset($\mathcal{S}$)\\
+	\For{$t = 2^{p-1}$ \KwTo $2^{p}$}{\label{forins}
+		choose $x_t$ uniformly from $\mathcal{L}$\\
+		$y_t \leftarrow advance(\mathcal{S})$\\
+		play $(x_t , y_t )$, observe choice $b_t$\\
+		feedback $\left(\mathcal{S},b_t\right)$\\
+	}
+	$\mathcal{L} \leftarrow$the multi-set of arms played as y t in the last for-loop.\\
+	$p \rightarrow p+1$
+}
+\caption{Doubler}\label{algo_disjdecomp}
+\end{algorithm}
+\DecMargin{1em}

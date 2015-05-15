@@ -1,0 +1,35 @@
+\IncMargin{1em}
+\begin{algorithm}
+
+\SetKwData{Left}{left}\SetKwData{This}{this}\SetKwData{Up}{up}
+\SetKwFunction{Union}{Union}\SetKwFunction{FindCompress}{FindCompress}
+\SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
+
+\Input{$T$,$ X = \{x_1,..., x_K\}, \delta$}
+$t\leftarrow 1$\\
+$ \mathcal{P} \leftarrow X$
+Choose $x_t \in \mathcal{P}$ randomly\\
+$ \mathcal{P} \leftarrow \mathcal{P} \backslash x_t$\\
+\BlankLine
+\While{$|\mathcal{P}| >1 $}{
+
+	\For{$x \in \mathcal{P}$}{
+	compare $x, x_t$\\
+	update $\hat{C}_{x_t, x} $ ,  $\hat{P}_{x_t, x} $
+	}
+
+	\While{$\exists x \in$ s.t. $\left( \hat{P}_{x_t, x} > 1/2  \wedge 1/2 \notin \hat{C}_{x_t, x}\right)$}{
+		$\mathcal{P} \leftarrow \mathcal{P} \backslash \{ x \} $
+	}
+	
+	\If{$\exists x_{t+1} \in$ s.t. $\left( \hat{P}_{x_t, x_{t+1}} < 1/2  \wedge 1/2 \notin \hat{C}_{x_t, x_{t+1}}\right)$}{
+		$x_t \leftarrow x_{t+1}$,\\
+		$\mathcal{P} \leftarrow \mathcal{P} \backslash \{x_{t+1}\} $\\
+		$\forall x \in \mathcal{P}  $ reset $\hat{C}_{x_{t}, x}$
+		, $\hat{P}_{x_{t}, x}$
+	}
+	$t \leftarrow t+1$
+}
+\caption{Interleaved Filter}\label{algo_disjdecomp}
+\end{algorithm}
+\DecMargin{1em}
