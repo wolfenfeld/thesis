@@ -13,9 +13,9 @@ $ \hat{Q}_{x,y} = 1_{K \times K} $
 %$ \mathcal{H} \leftarrow \mathcal{H}_0$\\
 \BlankLine
 \While{$|\mathcal{P}|>1 \wedge t<T $}{
-	$x_t \leftarrow argmax_{x,y \in \mathcal{P}} \sum_x Q_{x,y} \geq 1/2$\\
+	$x_t \leftarrow argmax_{x,y \in \mathcal{P}} \sum_x p_{x,y} \geq 1/2$\\
 	$\hat{\mu}_{x_t}\leftarrow
-	(1-\frac{1}{t_i})\hat{\mu}_{x_t}+\frac{1}{t_i}x_t$\\
+	(1-\frac{1}{n_{x_t}})\hat{\mu}_{x_t}+\frac{1}{n_{x_t}}x_t$\\
 	$\mathcal{H} \leftarrow \mathcal{H} \cap \left\{
 		x \mid |x_t-\hat{\mu}_{x_t}| < 
 		\sqrt{

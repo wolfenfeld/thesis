@@ -218,13 +218,13 @@ For the convenience of the reader we have included a table of all the definition
  			$\hat{P}_x  $ &  $ w_x / n_x $\\
  			$ W = [w_{x,y}]$ & Number of wins of arm $x$ over arm $y$\\
  			$U = [u_{x,y}]$ &  Utility function\\
- 			$\Theta_{x,y}$ &   Random variable
+ 			$\Theta_{x,y}$ &   Random variable with Beta distribution.
 		\end{tabular}
 	\end{table}
 
 \newpage
 
-\section{Survey of Algorithms }
+\section{Survey of Algorithms}
 	We start by surveying dueling bandit algorithms. In this section we have included Interleaved Filtering, Beat the Mean Bandit, RUCB, RCS, SAVAGE and the Sparring and Doubler algorithms for they served as a foundation for our new approach.
 	
 \subsubsection{Interleaved Filter}
@@ -232,10 +232,10 @@ For the convenience of the reader we have included a table of all the definition
 	Starts with all the arms in the potential arms set - $\mathcal{P}$, it chooses a random arm as a candidate. 
 	The exploration step consists of a simple elimination strategy,called Interleaved Filtering (IF), which identifies the best arm with probability at least $1-\delta $ . 
 	The IF algorithm successively selects an arm and compares it to other arms (Bernoulli trial). 
-	More specifically, the currently selected arm $x_i$ is compared to the rest of the arms in the potential arms set $\mathcal{P}$.
+	More specifically, the currently selected arm $x$ is compared to the rest of the arms in the potential arms set $\mathcal{P}$.
 	IF maintains a mean and confidence interval for each pair of arms being compared. 
-	If an arm $x_j$ beats $x_i$ , that is, $q_{i,j}+c_{i,j}<1/2$, then $x_i$ is eliminated, and $x_j$ is compared to the rest of the arms in the potential arms set $\mathcal{P}$.
-	In addition, a simple pruning technique can be applied: if $q_{i,j}-c_{i,j}<1/2$ for an arm $x_j$ at any time, then $x_j$ can be eliminated, as it cannot be the best arm any-more (with high probability). 
+	If an arm $y$ beats $x$ , that is, $p_{x,y}+c_{x,y}<1/2$, then $x$ is eliminated, and $y$ is compared to the rest of the arms in the potential arms set $\mathcal{P}$.
+	In addition, a simple pruning technique can be applied: if $p_{x,y}-c_{x,y}<1/2$ for an arm $y$ at any time, then $y$ can be eliminated, as it cannot be the best arm any-more (with high probability). 
 	After the exploration phase, the exploitation phase simply takes the most promising arm $x^*$ found by IF and repeatedly compares $x^*$ to itself.	
 	
 	\input{InterleavedFilter.tex}
@@ -248,7 +248,7 @@ For the convenience of the reader we have included a table of all the definition
 	BTM maintains a score for each arm $\hat{P}_{x} = \frac{w_x}{n_x}$, where $w_x$ is the number of times arm $x$ has won the comparison (not taking into account which arm it was compared to.
 	The name of this algorithm comes from the idea of comparing the arm against the "mean" arm (bandit in this case).
 	The idea is beating half of the arms when comparing to the "mean" arm. 
-	BTM also maintains a confidence interval $c^*$ around the score	$\hat{P}_{x_i}$, using this interval arms can be removed from the potential arm set $\mathcal{P}$ if an arm is significantly low in score from "strongest" arm (the arm with the highest score).
+	BTM also maintains a confidence interval $c^*$ around the score	$\hat{P}_{x}$, using this interval arms can be removed from the potential arm set $\mathcal{P}$ if an arm is significantly low in score from "strongest" arm (the arm with the highest score).
 	
 	\input{BeatTheMean.tex}
 
@@ -256,9 +256,9 @@ For the convenience of the reader we have included a table of all the definition
 
 \subsubsection{RUCB} Relative Upper Confidence Bound by Zoghi et al. [?], adapts the most commonly used algorithm UCB [?] in the standard MAB setting to the Dueling Bandit setting. 
 	This only assumption this algorithm holds on the arms is that exists a Condorcet winner - meaning an arm that beats all the other arms on average. 
-	Similar the the UCB algorithm the RUCB algorithm, this algorithm is based on the "optimism in the face of uncertainty" principle, meaning that the arms that are selected hold the highest pairwise upper bounds - $u_{x_i,x_j}$.
-	In each round, RUCB selects the arms to compare from the set of potential Condorcet winners, meaning the set of arms for which all $u_{x_i,x_j}$ values are above $1/2$.
-	Then $x_i$ is compared to the arm $x_j = argmax_{x} u_{x,x_j}$, in order to minimize regret, taking into account the optimistic estimates. 
+	Similar the the UCB algorithm the RUCB algorithm, this algorithm is based on the "optimism in the face of uncertainty" principle, meaning that the arms that are selected hold the highest pairwise upper bounds - $u_{x_t,y_t}$.
+	In each round, RUCB selects the arms to compare from the set of potential Condorcet winners, meaning the set of arms for which all $u_{x_t,y_t}$ values are above $1/2$.
+	Then $x_t$ is compared to the arm $y_t = argmax_{y} u_{y,x_t}$, in order to minimize regret, taking into account the optimistic estimates. 
 	In the analysis of the infinite horizon RUCB algorithm, both expected and high probability regret bounds are provided and both bounds are $O(K log T)$.  
 	
 	\input{RUCB.tex}
@@ -269,13 +269,13 @@ For the convenience of the reader we have included a table of all the definition
 	The main idea behind this sampling technique is to use the superior performance of Thompson Sampling [?], in the same manner it is used in the K-armed bandit setting. 
 
 	\input{RCS.tex}
-	
+	\newpage
 \subsubsection{SAVAGE}
 	(Uryoy et al., 2013) works by reducing a box-shaped confidence set until a single arm remains.
 	Sensitivity analysis of variables for generic exploration (SAVAGE) is a more recent algorithm that performs better than both IF and BTM by a wide margin when the number of arms is small. 
 	SAVAGE compares pairs of arms uniformly randomly until there exists a pair for which one of the arms beats the other by a wide margin, in which case the loser is removed from the pool of arms under consideration.
 \input{SAVAGE.tex}
-
+\newpage
 \subsubsection{Sparring}
 	(Ailon et al., 2014) works by drawing a pair of arms from two SBM's in each round and comparing them as all the previous algorithms. Once observing the preference the algorithm updates the preferred (according to the observation) SBM.  
 	
