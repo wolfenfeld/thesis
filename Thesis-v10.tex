@@ -10,6 +10,7 @@
 \usepackage{graphicx}
 \usepackage{caption}
 \usepackage{subcaption}
+\setcounter{secnumdepth}{3}
 \usepackage{dsfont}
 \author{Amit Wolfenfeld\inst{1}}
 \institute{Technion}
@@ -21,9 +22,9 @@
 \begin{abstract}
 In machine learning, the notion of multi-armed bandits refers
 to a class of online learning problems, in which a learner (also called decision maker or agent) explores and exploits a given set of choice alternatives in the course of a sequential decision process. 
-In the standard setting, the agent learns from stochastic feedback in the form of real-valued rewards.
+In the standard setting, the learners learns from stochastic feedback in the form of real-valued rewards.
 
-The Dueling Bandits setting is an online learning framework in which actions are restricted to stochastic comparisons between pairs of strategies.
+The Dueling Bandits setting is an online learning framework in which actions are restricted to stochastic comparisons between pairs of arms.
 It models settings were absolute rewards are difficult to estimate but pairwise preferences are readily available. 
 
 In this paper we propose several new methods for the Dueling Bandit Problem. Our approach extends the Doubler and Sparring algorithm proposed on [???]. We show empirical results using real data from Microsoft Research's LETOR project.
@@ -31,48 +32,58 @@ In this paper we propose several new methods for the Dueling Bandit Problem. Our
 
 \section{Introduction}
 	Multi-armed bandit (MAB) algorithms have received considerable attention and have been studied quite intensely in machine learning since the 50's when  Lai and Robbins released their paper [?]. 
-	The huge interest in this top is not really surprising, due to the fact that this MAB setting is not only theoretically challenging but also extremely useful, as can be seen from their use in a wide range of applications. MAB algorithms are used today for solving many problems such as - in search engines [?], online advertisement [?], and recommendation systems [?].
-	The multi-armed bandit problem, or bandit problem for short, is one of the simplest instances of the sequential decision making problem, in which a learner needs to select options from a given set of alternatives repeatedly in an online manner -  the name comes the gambling world in which a gambler decides from a row of slot machines (sometimes known as "one-armed bandits") and decides which machines to play, how many times to play each machine and in which order to play them. When played, each machine provides a random reward from a distribution specific to that machine. 
+	The huge interest in this topic is not very surprising, due to the fact that this MAB setting is not only theoretically challenging but also extremely useful, as can be seen from its use in a wide range of applications. MAB algorithms are used today for solving many problems such as - in search engines [?], online advertisement [?], and recommendation systems [?].
+	The multi-armed bandit problem, or bandit problem for short, is one of the simplest instances of the sequential decision making problem, in which a learner needs to select options from a given set of alternatives repeatedly in an online manner -  the name comes from the gambling world in which a gambler decides from a row of slot machines (sometimes known as "one-armed bandits") and decides which machines to play, how many times to play each machine and in which order to play them. When played, each machine provides a random reward from a distribution specific to that machine. 
 	The objective of the gambler is to maximize the sum of rewards earned through a sequence of lever pulls. 
-	To be more precise, the learner selects one option at a time and observes a numerical (and typically stochastic) reward, providing information on the quality of that option. The goal of the learner is to optimize an evaluation criterion such as the error rate (the expected percentage of playing a suboptimal arm) or the cumulative regret (the expected difference between the sum of the rewards actually obtained and the sum of rewards that could have been obtained by playing the best arm in each round).
-	In order to minimize the regret, the learner has to face the crucial tradeoff at each trial between "exploitation" of the machine that has the highest expected payoff and "exploration" to get more information about the expected payoffs of the other machines. 
+	To be more precise, the learner selects one option at a time and observes a numerical (and typically stochastic) reward, providing information on the quality of that arm. The goal of the learner is to optimize an evaluation criterion such as the error rate (the expected percentage of playing a suboptimal arm) or the cumulative regret (the expected difference between the sum of the rewards actually obtained and the sum of rewards that could have been obtained by playing the best arm in each round).
+	In order to minimize the regret, the learner has to face the crucial tradeoff at each trial between "exploitation" of the machine that has the apparent highest expected payoff and "exploration" to get more information about the expected payoffs of the other machines. 
 	The learner has to find the best "ratio" between playing the arms that produced high rewards in the past (exploitation) and trying other, possibly even better arms the (expected) reward of which is not precisely known so far (exploration).
-	There are many variations of the MAB problem and in most of the we assume a numerical reward such as arm 1 has the value of 0.7, however there are many applications where such assumption does not hold,  were the feedback is a pairwise comparison (arm 1 is better then 2) as opposed to standard bandits.
-	There are many cases in the world of machine learning where where precise feedback is not available, and only preference feedback is available. In these cases weakly supervised learning and preference learning can be used.  	
-	 
+	There are many variations of the MAB problem and in most of the we assume a numerical reward such as "arm  number 1 has the value of 0.7", however there are many applications where such assumption does not hold,  were the feedback is a pairwise comparison "arm number 1 is better than arm number 2" as opposed to standard bandits.
+	There are many cases in the world of machine learning where precise feedback is not available, and only preference feedback is available. In these cases weakly supervised learning and preference learning must be used, and this is what we study here.  		 
 	In preference learning, feedback is typically represented in a purely qualitative way, namely in terms of pairwise comparisons or rankings. 
 	Feedback of this kind can be useful in online learning, too, as has been shown in online information retrieval.
-	Web search and internet marketing are two examples that show the importance for the Dueling Bandits setting. For web-search, were there is no implicit feedback, only relative -  For instance, when a web-search user prefers one choice over the other.
-	As for internet marketing, when advertises aim to sell products online, they will direct users to their sale page. 
+	Web search and internet marketing are two examples that show the importance for the Dueling Bandits setting. A search engine needs to give the user the best result for his or her query. For every query the search engine lets the user select from several options of search results and receives the feedback according to the users choice. This feedback comes in the form of "the first result is preferred over the other results".  
+	Another example is when an advertiser aims to sell products online. The advertiser will direct users to his sale page. 
 	Every advertiser wants sell as much as possible therefore they will want to improve their sale page. In order to improve their sale page the advertiser will create several versions of the pages, split the users between them, and see which one is the top performer. This process is called A/B testing, and each page version is represented by an arm in the Multi Armed Bandit  setting. 
 	The problem with standard bandits is that there are trends in the market that temporarily decrease or increase the overall performance (Christmas time for instance). 
-	Assuming that the arm's order of performance stays the same, meaning the best arm ,performance-wise, stays first, the second best arm stays second and so on - Dueling Bandits Algorithms can be used to increase the advertiser's sale performance while keeping the regret to a minimum.	
+	Assuming that the arm's order of performance stays the same, meaning the best arm, performance-wise, stays first, the second best arm stays second and so on - Dueling Bandits Algorithms can be used to increase the advertiser's sale performance while keeping the regret to a minimum.	
 	Extending the multi-armed bandit setting to the case of preference-based feedback, i.e., the case in which the online learner is allowed to compare arms in a qualitative way, is therefore a promising idea. 
-	And indeed, extensions of that kind have received increasing attention in the recent years. 
+	Indeed, extensions of that kind have received increasing attention in the recent years. 
 	The aim of this paper is to provide a survey of the state-of-the-art in the field of Dueling Bandits Algorithms and present several new algorithms. 
-	In section 2 we provide a scientific background for the Dueling Bandits Problem. In section 3 we survey the state-of-the-art algorithms. In section 4 we present new algorithm that our perform the algorithm described in section 3 and In section 5 we present the empirical results.
+	In section 2 we provide a scientific background for the Dueling Bandits Problem. In section 3 we survey the state-of-the-art algorithms. In section 4 we present a new algorithm that out performs the algorithm described in section 3, In section 5 we present the empirical results.
 \newpage
 
 \section{Scientific Background}
-	In this section we will go into more detail of what the MAB problem is and more important the definition of the Dueling Bandit Problem. 
-	We discuss to types of settings, the first - Utility Based Dueling Bandit (UBDB) setting and the second Preference Based Dueling Bandit (PBDB) setting.
-	\subsection{Multi Armed Bandit}
-	As described in the previous section the multi armed bandit problem is a sequential decision problem, where a learner explores and exploits a stochastic environment. 
-	In this setting, the learner performs actions, referred to as arm pulls. The arms belong to some finite set $X = {x_1,..,x_k}$, and is denoted as  $|X| = K $. 
-	Each arm $x_i \in {x_1,..,x_2}$ has some probability distribution over $[0, 1]$, with expectation $\mu_{x_i}$. 
+	In this section we will go into more detail of what the MAB problem is and more importunately the definition of the Dueling Bandits Problem. 
+	We discuss two types of settings, the first - Utility Based Dueling Bandit (UBDB) setting and the second Preference Based Dueling Bandit (PBDB) setting.
+	\subsection{Multi Armed Bandits}
+	As described in the previous section the multi armed bandit problem is a sequential decision making problem, where a learner explores and exploits a stochastic environment. 
+	In this setting, the learner performs actions, referred to as arm pulls. 
+	The arms belong to an infinite or finite set $X$. 
+	If the set is finite we denote $|X|$ by $K$. 
+	Each arm $x \in X$ is associated with a probability distribution over $[0, 1]$, with expectation $\mu_{x}$. 
 	Throughout this paper we assume the existence of a unique best arm:
-	$$ x^* = argmax_{x_i}(\mu_{x_i})$$
-	At each round $t \in 0,1,..,T$ the learner "pulls" an arm $x_i \in {x_1,..,x_2}$ and acquires a stochastic reward or utility $u_t$, independently of all previous rewards (i.i.d). 
-	For each arm $x_i$ and for all rounds $t \geq 1$,  $n_{x_i}(t)$ is denotes the number of times arm $x_i$ has been "played".
-	
-	\subsection{UBDB}
-	To formalize the problem of learning from preferences, we consider the following interactive online learning model, which we call the Utility-Based Dueling Bandits Problem (UBDB) similar to (Yue et al., 2012, Yue and Joachims, 2011). 
-		At each iteration $t$, the learning system presents two actions $x_t, y_t \in X$ to the user, where $X$ is the set (either finite or infinite) of possible actions. 
-		Each of the two actions has an associated random reward (or utility) for the user, which we denote by $u_t$ and $v_t$, respectively.
+	$$ x^* = argmax_{x \in X}(\mu_{x})$$
+	At each round $t > 0$ the learner "pulls" an arm $x_t \in X$ and acquires a stochastic reward or utility $u_t$, independently of all previous rewards (i.i.d). 
+	For each arm $x$ and for all rounds $t \geq 1$,  $n_{x}(t)$ denotes the number of times arm $x$ has been "played".
+	In this setup the cumulative regret is defined as following:
+	$$
+	R(T) = \sum_{t=1}^{T} \mu(x^*) - u_t 
+	$$ 
+	The cumulative regret shows the difference between the utility the player could have acquired if he played the best arm and the sum of utilities actually acquired.
+	\subsection{Dueling Bandits}
+		To formalize the problem of learning from preferences, we consider the following interactive online learning model,for the K-armed dueling bandit problem (Yue et al., 2012).
+		At each iteration $t$, the learning system presents two arms $x_t, y_t \in X$ to the learner, where $X$ is the set (either finite or infinite) of possible actions. The two arms are compared and the feedback comes in the form of a binary random variable $b_t$, declaring which arm beats the other arm.
+		In this paper we will study two different problem settings.
+		The first \textbf{UBDB} Utility Based Dueling Bandits, where each arm $x_t$, $y_t$ acquires a utility, unobservable by the learner, and the feedback $b_t$ "behaves" according to the utilities. 
+		The second - \textbf{PBDB} - Preference Based Dueling Bandits, where the outcome of the comparison between the arms behaves according to a predefined preference matrix $P$ that characterises the relationship between the arms.
+	\subsubsection{UBDB}
+		In this setting each of the two arms has an associated random reward (or utility) for the learner, which we denote by $u_t$ and $v_t$, respectively.
 		The quantity $u_t$ (resp. $v_t$) is drawn from a distribution that depends on $x_t$ (resp. $y_t$) only.  
-		We assume these utilities are in $[0, 1]$. The learning system is rewarded the average utility$ U_av(t) = (u_t + v_t)/2$ of the two actions it presents, but it does not observe this reward. 
-		Instead, it only observes the user’s binary choice among the two alternative actions $xt_, y_t$, which depends on the respective utilities $u_t$ and $v_t$. 
-		In particular, we model the observed choice as a $\{0, 1\}$ valued random variable $b_t$ distributed as
+		We assume, as always, these utilities are in $[0, 1]$. 
+		The learner is rewarded the average utility $ U_{av}(t) = (u_t + v_t)/2$ \footnote{ where \textit{av} is shorthand for average} of the two actions it presents, but it does not observe this reward. 
+		Instead, it only observes the a binary choice among the two alternative arms $x_t, y_t$, which depends on the respective utilities $u_t$ and $v_t$. 
+		In particular, we model the observed choice as a binary random variable $b_t$ distributed according to:
 		\begin{equation}
 		\begin{cases}
 		P(b_t = 1|u_t, v_t) = \phi(u_t, v_t)
@@ -82,100 +93,105 @@ In this paper we propose several new methods for the Dueling Bandit Problem. Our
 		\end{equation}			
 	where $\phi:[0, 1] \times [0, 1] \rightarrow [0, 1]$ is a link function. 
 	Clearly, the link function has to satisfy $\phi(A, B) + \phi(B, A) = 1$.
-	The binary choice is interpreted as a stochastic preference response between the left alternative $x_t$ (if $b_t = 0$) and the right alternative $y_t$ (if $b_t = 1$). 
-	The utility $U_{av}$ captures the overall latent user experience from the pair of alternatives. 
-	In the utility based dueling bandit game (UBDB), the algorithm chooses $(x_t, y_t) \in X \times X$ at each step, and a corresponding pair of random utilities $(u_t, v_t) \in [0, 1]$ are given rise to, but not observed by the algorithm.  
-	We assume $u_t$ is drawn from a distribution of expectation $\mu(x_t)$ and $v_t$ independently from a distribution of expectation $\mu(y_t)$. 
-	The algorithm observes a choice variable $b_t \in \{0, 1\}$ distributed according to the law (). 
-	This random variable should be thought of as the outcome of a duel, or match between $x_t$ and $y_t$. 
-	The outcome $b_t = 1$ (resp. $b_t = 0$) should be interpreted as “$y_t$ is chosen’ (resp. “$x_t$ is chosen”).
+	$b_t$ can be viewed as an indicator for the event $x_t \succ y_t $, or in words "$x_t$ beats $y_t$ in round $t$".
+	We assume $u_t$ is drawn from a distribution of expectation $\mu(x_t)$ and $v_t$ independently from a distribution of expectation $\mu(y_t)$.
 	The link function $\phi$, which is assumed to be known, quantitatively determines how to translate the utilities $u_t, v_t$ to winning probabilities. 
 	The linear link function $\phi_{lin}$ is defined by
 	$$P(b_t = 1|u_t, v_t) = \phi_{lin}(u_t, v_t) = \frac{1+v_t-u_t}{2}\in [0,1]$$
-The unobserved reward is $U_{av}(t) = (u_t + v_t)/2$, and the corresponding cumulative utility based regret after $T$ steps is $R_U(T) = \sum_{t=1}^T \mu(x^*)-U_{av}(t)$, where $x^* = argmax_{x \in X} \mu(x)$. 
-This implies that expected zero regret is achievable by setting $(x_t, y_t) = (x^*,x^*)$.
-In practice, these two identical alternatives would be displayed as one, as would naturally happen in interleaved retrieval evaluation (Chapelle et al., 2012). 
-It should be also clear that playing $(x^*,x^*)$ is pure exploitation, because the feedback is then an unbiased coin with zero exploratory information.
+	For the UBDB case the definition of the regret is very natural and straight forward:
+	$$R_U(T) = \sum_{t=1}^T \mu(x^*)-U_{av}(t)$$ 
+	Where, as always,  $x^* = argmax_{x \in X} \mu(x)$. 
+	This implies that expected zero regret is achievable by setting $(x_t, y_t) = (x^*,x^*)$.
+	It should be also clear that playing $(x^*,x^*)$ is pure exploitation, because the feedback is then an unbiased coin with zero exploratory information.
 	
-	\subsection{PBDB}
-		The notion of “Dueling Bandits” refers to the stochastic MAB problem with pairwise comparisons as actions has been intensively studied studied[?].
-		In this subsection we will define the relevant terms that are used throughout this paper.		
-		Same as in the UBDB setting	consider a fixed set of arms $X = {x_1,..,x_k}$. 
-		As actions, the learner performs a comparison between any pair of arms $x_i$ and $x_j$ , meaning the action space is identified with the set of index pairs $(i, j)$ such that $1 \leq i \leq j \leq K$. 
-		In this paper we characterise the feedback of the comparison by an unknown 	Preference Matrix $P$.	
-		
-		$$P = [p_{x_i,x_j}] \in [0,1]^{K \times K} $$
-		To be more precise - for each pair of arms $(x_i ,x_j)$, this relation specifies the probability
+	\subsubsection{PBDB}	
+		Same as in the UBDB setting	consider a fixed set of arms $X = \{x_1,..,x_k\}$. 
+		As actions, the learner performs a comparison between any pair of arms $x_t$ and $y_t$ , meaning the action space is identified with the set of index pairs $(i, j)$ such that $1 \leq i \leq j \leq K$. 
+		In this paper we characterise the feedback of the comparison by an unknown preference matrix $P$, which is not necessarily devised from the latent utility.
+		More precisely
+		$$P = [p_{x,y}] \in [0,1]^{K \times K} $$
+		To be more precise - for each pair of arms $(x ,y)$, this relation specifies the probability of the event
 		\begin{equation}
-		Pr(x_i \succeq x_j) = p_{x_i,x_j}
+		Pr(x \succeq y) = p_{x, y}
 		\end{equation}
-		of observing a preference for $x_i$ in a direct comparison with $x_j$. 
-		Meaning, each $p_{x_i,x_j}$ defines a Bernoulli distribution.
-		Throughout this paper we assume the these probabilities are independent and stationary during all rounds $t\in T$.		
-		
-		Meaning that whenever two arms is played $(x_i ,x_j)$ and compared, the outcome is distributed according to (1), without any dependencies on the previous iterations.
-		The relation $P$ is reciprocal in the sense that $p_{i,j} = 1-p_{j,i}$ for all $i, j \in [K] = \{1, . . . , K\}$.  
-		In this setting we allow ties in the comparison of two arms.
-		In several algorithm this is solved by a random winner or splitting the reward for each arm.		
-		Arm $x_i$ is said to beat arm $x_j$ if $p_{i,j} > 1/2$, meaning the probability of winning in a pairwise comparison is larger for $x_i$ than it is for $x_j$ . 
-		The closer $p_{i,j}$ is to $1/2$, the harder it is to distinguish between arm $x_i$ and arm $x_j$ based on a finite sample set from $Pr(x_i \succeq x_j)$. This resembles the case in the standard MAB problem where the gap $\Delta_{i,j}$ is very small.
-		 When $p_{i,j} = 1/2$, the learner cannot decide which arm is better based on a finite number of pairwise comparisons.
-		 In order to define the regret we need some kind of quantity.
-		 $$ \Delta_{i,j} = p_{i,j} - 1/2$$
-		 seems to be a good quantity to characterize the "damage" that is inflicted for each choice the learner makes during the Deuling Bandits game.
-		 As opposed to the standard bandit game 	$\Delta_{i,j}$ can be negative, in which the quantity used for the multi-armed bandit task is always positive and depends on the gap between the means of the best arm and the suboptimal arms.
+		of observing a preference for $x$ in a direct comparison with $y$. 
+		Meaning, each $p_{x,y}$ defines a Bernoulli distribution.
+		Throughout this paper we assume the these probabilities are independent and stationary during all rounds $t > 0$.		
+		This means that whenever two arms is played $(x ,y)$ and compared, the outcome is distributed according to (1), without any dependencies on the previous iterations.
+		The relation matrix $P$ is reciprocal in the sense that $p_{x,y} = 1-p_{x,y}$ for all $x,y \in X$.		
+		Arm $x$ is said to outperform arm $y$ if $p_{x,y} > 1/2$, meaning the probability of winning in a pairwise comparison is larger for $x$ than it is for $y$ . 
+		The closer $p_{x,y}$ is to $1/2$, the harder it is to distinguish between arm $x$ and arm $y$ based on a finite sample set from $Pr(x \succeq y)$. This resembles the case in the standard MAB problem where the gap $\Delta_{x,y}$ is very small.
+		 When $p_{x,y} = 1/2$, the learner cannot decide which arm is better based on a finite number of pairwise comparisons.
+		 Defining a regret is more tricky in PBDB. In particular, it is necessary to make assumptions on $P$ for the definition to make sense.
+		 In (Joachims and Yue, 2011) "Relaxed Stochastic Transitivity" is assumed, defined by:
+		 For any triplet of arms $x \succ y \succ z$ and some $ \gamma \geq 1 $, 
+		 we assume $\gamma \Delta_{x,z} \geq \max(\Delta_{x,y},\Delta_{y,z})$.
+		 Where $\Delta_{x,y}$ is defined		 
+		 $$ \Delta_{x,y} = p_{x,y} - 1/2$$
+%		 In this case the regret is defined as
+%		 \begin{equation}
+%		 R_P(T) = \sum_{t=1}^T \frac{\Delta_{x*,x_t}+\Delta_{x*,y_t}}{2} 
+%		 \end{equation}
+		 In a later paper (Urvoy et al., 2013) this assumption was relaxed, and only a Condorcet winner is assumed, where a Condercet winner is defined as an arm $x$, such that $ \forall y, p_{x,y} > 1/2$. 
+		 Given a Condorcet winner, we define regret for each time-step as follows (Yue et al., 2012): if arms $x$ and $y$ were chosen for comparison at time $t$, then regret at that time is $ \frac{\Delta_{x^*,x_t}+\Delta_{x^*,y_t}}{2} $ and the cumulative regret is
+		 \begin{equation}
+		 R_P(T) = \sum_{t=1}^T \frac{\Delta_{x*,x_t}+\Delta_{x*,y_t}}{2}
+		 \end{equation}
+%		 Where $\Delta_{x,y}$ is defined		 
+%		 $$ \Delta_{x,y} = p_{x,y} - 1/2$$
+%		 This to be a good quantity to characterize the "damage" that is inflicted for each choice the learner makes during the Dueling Bandits game.
+		 As opposed to the standard bandit game $\Delta_{x,y}$ can be negative, in which the quantity used for the multi-armed bandit task is always positive and depends on the gap between the means of the best arm and the suboptimal arms.
 		 
 	\subsection{Probability estimation}		 
 		The Dueling Bandit game is played in discrete rounds, either through a finite time horizon or an infinite horizon. 
-		 As described in the previous section, the learner compares between two arms in each round $t \in T$. 
-		 And so, in each round $t$, the learner selects a pair $1 \leq i(t) \leq j(t) \leq K$ and observes
+		 As described in the previous section, the learner compares between two arms in each round $t > 0$. 
+		 And so, in each round $t$, the learner selects a pair of arms $x_t,y_t$ and observes
 	\begin{equation}
 		\begin{cases}
-    		x_{i(t)} \succeq x_{j(t)} & \text{with probablity } p_{i,j} 
+    		x_t \succeq y_t & \text{with probablity } p_{x_t,y_t} 
        	\\
-    		x_{j(t)} \succeq x_{i(t)} & \text{with probablity } p_{j,i}
+    		y_t \succeq x_t & \text{with probablity } p_{y_t,x_t}
 	\end{cases}
 	\end{equation}		
-	In this paper the pairwise probabilities $p_{i,j}$ can is estimated according to the finite sample sets.
-	We consider the set of rounds among the first $t$ iterations, in which the learner decides to compare arms $x_i$ and $x_j$ , and denote the size of this set by $n_{i,j}$, or the number of times $x_i$ and $x_j$ have been compared.  
-	We denote the number of times $x_i$ "won" over $x_j$ by $w_{i,j}$ and $w_{j,i}$ the number of “wins” of $x_j$ over $x_i$.
-	It is easy to see that $n_{i,j} = n_{j,i} = w_{i,j}+w_{j,i}$ and so the estimation of $p_{i,j}$ up to iteration $t$ is then given by
+	In this paper the pairwise probabilities $p_{x,y}$ can is estimated according to the finite sample sets.
+	We consider the set of rounds among the first $t$ iterations, in which the learner decides to compare arms $x$ and $y$ , and denote the size of this set by $n_{x,y}$, or the number of times $x$ and $y$ have been compared.  
+	We denote the number of times $x$ "beat" over $y$ by $w_{x,y}$ and $w_{y,x}$ the number of "beat" of $y$ over $x$.
+	It is easy to see that $n_{x,y} = n_{y,x} = w_{x,y}+w_{y,x}$ and so the unbiased estimation of $p_{x,y}$ up to iteration $t$ is then given by
 	$$ 
-		\hat{P}_{x_i, x_j} = \frac{w_{i,j}}{n_{i,j}} = 
-		\frac{w_{i,j}}{w_{i,j}+w_{j,i}}
+		\hat{P}_{x, y} = \frac{w_{x,y}}{n_{x,y}} = 
+		\frac{w_{x,y}}{w_{x,y}+w_{y,x}}
 	$$
-	As mention above, in this paper we assume that the samples are independent and identically distributed (i.i.d), $\hat{p}_{i,j}$ is a good estimate of the pairwise probability (1). 
-	This estimate might be biased, since $n_{i,j}$ depends on the choice of the learner, which in turn depends on the out come of the previous rounds and so $n_{i,j}$ itself is a random quantity.
+	As mention above, in this paper we assume that the samples are independent and identically distributed (i.i.d), $\hat{p}_{i,j}$ is a good estimate of the pairwise probability (2). 
 	As in most MAB algorithms a high probability confidence interval is obtained by the Hoeffding bound. 
-	The confidence intervals may differ from one algorithm to another, but usually it is of the form $[p_{i,j} \pm c_{i,j} ]$. 
-	According to this definition arm $x_{i}$ beats arm $x_{j}$ with high probability 	if $p_{i,j} + c_{i,j} > 1/2]$, and, $x_{i}$ is beaten by arm $x_{j}$ with high probability, if $p_{i,j} + c_{i,j} < 1/2]$.
+	The confidence intervals may differ from one algorithm to another, but usually it is of the form $[p_{x,y} \pm c_{x,y} ]$. 
+	According to this definition arm $x$ outperforms arm $y$ with high likelihood if $p_{x,y} + c_{x,y} > 1/2]$, and, $x$ is beaten by arm $y$ with high probability, if $p_{x,y} + c_{x,y} < 1/2]$.
 	
-	In the preference-based setting, defining a the regret is not as easy as in the standard MAB setting or utility-based setting (defined above), where the sub-optimality of an action can be expressed according to the utility or reward. 
-	Since the learner compares between two arms, both of them should be effect the regret, both of them should be compared to the optimal arm.
-	Usually the following regret is used for the preference based setting.
-	Assuming the learner selects arms $x_{i(t)}$ and $x_{j(t)}$ at time $t$.
-	The cumulative regret incurred by the learner up to time $T$ is:
-	\begin{equation}
-	R_P(T) = \sum_{t=1}^T \frac{\Delta_{i^*,i(t)}+\Delta_{i^*,j(t)}}{2} 
-	\end{equation}	 
-	
+%	In the preference-based setting, defining a the regret is not as easy as in the standard MAB setting or utility-based setting (defined above), where the sub-optimality of an action can be expressed according to the utility or reward. 
+%	Since the learner compares between two arms, both of them should be effect the regret, both of them should be compared to the optimal arm.
+%	Usually the following regret is used for the preference based setting.
+%	Assuming the learner selects arms $x_t$ and $y_t$ at time $t$.
+%	The cumulative regret incurred by the learner up to time $T$ is:
+%	\begin{equation}
+%	R_P(T) = \sum_{t=1}^T \frac{\Delta_{i^*,x_t}+\Delta_{i^*,y_t}}{2} 
+%	\end{equation}	 
+	In the extreme case where the preference matrix $P$ is induced by \textbf{UBDB} we argue that the regret defined in 2.2.1 is the same as in 2.2.2. 
 	We will show that using the definition of the linear link function we both utility based regret and preference based regret are the same (till a factor of 2): 
 	\begin{equation}\label{eq:ref1}
-		p_{i^*,k} = \phi_{lin}(\mu(x^*),\mu(x_k)) = \frac{1 +\mu(x_k)-\mu(x^*)}{2}
+		p_{x^*,y} = \phi_{lin}(\mu(x^*),\mu(y)) = \frac{1 +\mu(y)-\mu(x^*)}{2}
 	\end{equation}
 	
-	Incorporating \eqref{eq:ref1} in the definition of $\Delta_{i^*,k}$ we get
+	Incorporating \eqref{eq:ref1} in the definition of $\Delta_{x,y}$ we get
 	$$
-	\Delta_{i^*,k} = p_{i^*,k} - \frac{1}{2} = \frac{\mu(x^*)-\mu(x_k)}{2}
+	\Delta_{x^*,y} = p_{x^*,y} - \frac{1}{2} = \frac{\mu(x^*)-\mu(y)}{2}
 	$$
 	And so the total regret is defined:
-	$$ R_P(T) = \sum_{t=1}^T \frac{\Delta_{i^*,i(t)}+\Delta_{i^*,j(t)}}{2} =  
-\sum_{t=1}^T \frac{\frac{\mu(x^*)-\mu(x_{i(t)})}{2}+\frac{\mu(x^*)-\mu(x_{j(t)})}{2}}{2} =
+	$$ R_P(T) = \sum_{t=1}^T \frac{\Delta_{x^*,x_t}+\Delta_{x^*,y_t}}{2} =  
+\sum_{t=1}^T \frac{\frac{\mu(x^*)-\mu(x_t)}{2}+\frac{\mu(x^*)-\mu(y_t)}{2}}{2} =
 $$
 
 $$
 \frac{1}{2} \sum_{t=1}^T \mu(x^*) -\frac{
-	\mu(x_{i(t)})+\mu(x_{j(t)})}{2} =
+	\mu(x_t)+\mu(y_t)}{2} =
 \frac{1}{2} \sum_{t=1}^T \mu(x^*)- U_{av} = \frac{1}{2}R_U(T)$$
 
 \newpage
@@ -208,7 +224,7 @@ For the convenience of the reader we have included a table of all the definition
 
 \newpage
 
-\section{Related Work}
+\section{Survey of Algorithms }
 	We start by surveying dueling bandit algorithms. In this section we have included Interleaved Filtering, Beat the Mean Bandit, RUCB, RCS, SAVAGE and the Sparring and Doubler algorithms for they served as a foundation for our new approach.
 	
 \subsubsection{Interleaved Filter}
