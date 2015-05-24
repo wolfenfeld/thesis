@@ -6,7 +6,7 @@
 \usepackage{amsfonts}
 \usepackage{amssymb}
 \usepackage{bbm}
-\usepackage[ruled,vlined]{algorithm2e}
+\usepackage[ruled,vlined,linesnumbered]{algorithm2e}
 \usepackage{graphicx}
 \usepackage{caption}
 \usepackage{subcaption}
@@ -63,13 +63,15 @@ In this paper we propose several new methods for the Dueling Bandit Problem. Our
 	If the set is finite we denote $|X|$ by $K$. 
 	Each arm $x \in X$ is associated with a probability distribution over $[0, 1]$, with expectation $\mu_{x}$. 
 	Throughout this paper we assume the existence of a unique best arm:
-	$$ x^* = argmax_{x \in X}(\mu_{x})$$
+	\begin{equation}\label{eq:regret}
+		x^* = argmax_{x \in X}(\mu_{x})
+	\end{equation}		
 	At each round $t > 0$ the learner "pulls" an arm $x_t \in X$ and acquires a stochastic reward or utility $u_t$, independently of all previous rewards (i.i.d). 
 	For each arm $x$ and for all rounds $t \geq 1$,  $n_{x}(t)$ denotes the number of times arm $x$ has been "played".
 	In this setup the cumulative regret is defined as following:
-	$$
-	R(T) = \sum_{t=1}^{T} \mu(x^*) - u_t 
-	$$ 
+	\begin{equation}\label{eq:regret}
+		R(T) = \sum_{t=1}^{T} \mu(x^*) - u_t
+	\end{equation}
 	The cumulative regret shows the difference between the utility the player could have acquired if he played the best arm and the sum of utilities actually acquired.
 	\subsection{Dueling Bandits}
 		To formalize the problem of learning from preferences, we consider the following interactive online learning model,for the K-armed dueling bandit problem (Yue et al., 2012).
@@ -84,7 +86,7 @@ In this paper we propose several new methods for the Dueling Bandit Problem. Our
 		The learner is rewarded the average utility $ U_{av}(t) = (u_t + v_t)/2$ \footnote{ where \textit{av} is shorthand for average} of the two actions it presents, but it does not observe this reward. 
 		Instead, it only observes the a binary choice among the two alternative arms $x_t, y_t$, which depends on the respective utilities $u_t$ and $v_t$. 
 		In particular, we model the observed choice as a binary random variable $b_t$ distributed according to:
-		\begin{equation}
+		\begin{equation}\label{eq:b_t}
 		\begin{cases}
 		P(b_t = 1|u_t, v_t) = \phi(u_t, v_t)
 		\\
@@ -97,9 +99,14 @@ In this paper we propose several new methods for the Dueling Bandit Problem. Our
 	We assume $u_t$ is drawn from a distribution of expectation $\mu(x_t)$ and $v_t$ independently from a distribution of expectation $\mu(y_t)$.
 	The link function $\phi$, which is assumed to be known, quantitatively determines how to translate the utilities $u_t, v_t$ to winning probabilities. 
 	The linear link function $\phi_{lin}$ is defined by
-	$$P(b_t = 1|u_t, v_t) = \phi_{lin}(u_t, v_t) = \frac{1+v_t-u_t}{2}\in [0,1]$$
+	\begin{equation}\label{eq:link_function}
+		P(b_t = 1|u_t, v_t) = \phi_{lin}(u_t, v_t) = \frac{1+v_t-u_t}{2}\in [0,1]
+	\end{equation}
 	For the UBDB case the definition of the regret is very natural and straight forward:
-	$$R_U(T) = \sum_{t=1}^T \mu(x^*)-U_{av}(t)$$ 
+
+	\begin{equation}\label{eq:utility_regret}
+		R_U(T) = \sum_{t=1}^T \mu(x^*)-U_{av}(t)
+	\end{equation}	
 	Where, as always,  $x^* = argmax_{x \in X} \mu(x)$. 
 	This implies that expected zero regret is achievable by setting $(x_t, y_t) = (x^*,x^*)$.
 	It should be also clear that playing $(x^*,x^*)$ is pure exploitation, because the feedback is then an unbiased coin with zero exploratory information.
@@ -109,10 +116,13 @@ In this paper we propose several new methods for the Dueling Bandit Problem. Our
 		As actions, the learner performs a comparison between any pair of arms $x_t$ and $y_t$ , meaning the action space is identified with the set of index pairs $(i, j)$ such that $1 \leq i \leq j \leq K$. 
 		In this paper we characterise the feedback of the comparison by an unknown preference matrix $P$, which is not necessarily devised from the latent utility.
 		More precisely
-		$$P = [p_{x,y}] \in [0,1]^{K \times K} $$
+		
+		\begin{equation}\label{eq:preference_matrix}
+			P = [p_{x,y}] \in [0,1]^{K \times K} 
+		\end{equation}
 		To be more precise - for each pair of arms $(x ,y)$, this relation specifies the probability of the event
-		\begin{equation}
-		Pr(x \succeq y) = p_{x, y}
+		\begin{equation}\label{eq:p_xy}
+			Pr(x \succeq y) = p_{x, y}
 		\end{equation}
 		of observing a preference for $x$ in a direct comparison with $y$. 
 		Meaning, each $p_{x,y}$ defines a Bernoulli distribution.
@@ -126,15 +136,13 @@ In this paper we propose several new methods for the Dueling Bandit Problem. Our
 		 In (Joachims and Yue, 2011) "Relaxed Stochastic Transitivity" is assumed, defined by:
 		 For any triplet of arms $x \succ y \succ z$ and some $ \gamma \geq 1 $, 
 		 we assume $\gamma \Delta_{x,z} \geq \max(\Delta_{x,y},\Delta_{y,z})$.
-		 Where $\Delta_{x,y}$ is defined		 
-		 $$ \Delta_{x,y} = p_{x,y} - 1/2$$
-%		 In this case the regret is defined as
-%		 \begin{equation}
-%		 R_P(T) = \sum_{t=1}^T \frac{\Delta_{x*,x_t}+\Delta_{x*,y_t}}{2} 
-%		 \end{equation}
+		 Where $\Delta_{x,y}$ is defined
+		 \begin{equation}\label{eq:delta}
+		 	\Delta_{x,y} = p_{x,y} - 1/2
+		 \end{equation}		 		 
 		 In a later paper (Urvoy et al., 2013) this assumption was relaxed, and only a Condorcet winner is assumed, where a Condercet winner is defined as an arm $x$, such that $ \forall y, p_{x,y} > 1/2$. 
 		 Given a Condorcet winner, we define regret for each time-step as follows (Yue et al., 2012): if arms $x$ and $y$ were chosen for comparison at time $t$, then regret at that time is $ \frac{\Delta_{x^*,x_t}+\Delta_{x^*,y_t}}{2} $ and the cumulative regret is
-		 \begin{equation}
+		 \begin{equation}\label{eq:preference_regret}
 		 R_P(T) = \sum_{t=1}^T \frac{\Delta_{x*,x_t}+\Delta_{x*,y_t}}{2}
 		 \end{equation}
 %		 Where $\Delta_{x,y}$ is defined		 
@@ -157,29 +165,19 @@ In this paper we propose several new methods for the Dueling Bandit Problem. Our
 	We consider the set of rounds among the first $t$ iterations, in which the learner decides to compare arms $x$ and $y$ , and denote the size of this set by $n_{x,y}$, or the number of times $x$ and $y$ have been compared.  
 	We denote the number of times $x$ "beat" over $y$ by $w_{x,y}$ and $w_{y,x}$ the number of "beat" of $y$ over $x$.
 	It is easy to see that $n_{x,y} = n_{y,x} = w_{x,y}+w_{y,x}$ and so the unbiased estimation of $p_{x,y}$ up to iteration $t$ is then given by
-	$$ 
+	\begin{equation}\label{eq:est_pxy}
 		\hat{P}_{x, y} = \frac{w_{x,y}}{n_{x,y}} = 
 		\frac{w_{x,y}}{w_{x,y}+w_{y,x}}
-	$$
+	\end{equation}	 
 	As mention above, in this paper we assume that the samples are independent and identically distributed (i.i.d), $\hat{p}_{i,j}$ is a good estimate of the pairwise probability (2). 
 	As in most MAB algorithms a high probability confidence interval is obtained by the Hoeffding bound. 
 	The confidence intervals may differ from one algorithm to another, but usually it is of the form $[p_{x,y} \pm c_{x,y} ]$. 
 	According to this definition arm $x$ outperforms arm $y$ with high likelihood if $p_{x,y} + c_{x,y} > 1/2]$, and, $x$ is beaten by arm $y$ with high probability, if $p_{x,y} + c_{x,y} < 1/2]$.
-	
-%	In the preference-based setting, defining a the regret is not as easy as in the standard MAB setting or utility-based setting (defined above), where the sub-optimality of an action can be expressed according to the utility or reward. 
-%	Since the learner compares between two arms, both of them should be effect the regret, both of them should be compared to the optimal arm.
-%	Usually the following regret is used for the preference based setting.
-%	Assuming the learner selects arms $x_t$ and $y_t$ at time $t$.
-%	The cumulative regret incurred by the learner up to time $T$ is:
-%	\begin{equation}
-%	R_P(T) = \sum_{t=1}^T \frac{\Delta_{i^*,x_t}+\Delta_{i^*,y_t}}{2} 
-%	\end{equation}	 
 	In the extreme case where the preference matrix $P$ is induced by \textbf{UBDB} we argue that the regret defined in 2.2.1 is the same as in 2.2.2. 
 	We will show that using the definition of the linear link function we both utility based regret and preference based regret are the same (till a factor of 2): 
 	\begin{equation}\label{eq:ref1}
 		p_{x^*,y} = \phi_{lin}(\mu(x^*),\mu(y)) = \frac{1 +\mu(y)-\mu(x^*)}{2}
 	\end{equation}
-	
 	Incorporating \eqref{eq:ref1} in the definition of $\Delta_{x,y}$ we get
 	$$
 	\Delta_{x^*,y} = p_{x^*,y} - \frac{1}{2} = \frac{\mu(x^*)-\mu(y)}{2}
@@ -222,37 +220,142 @@ For the convenience of the reader we have included a table of all the definition
 		\end{tabular}
 	\end{table}
 
-\newpage
-
 \section{Survey of Algorithms}
 	We start by surveying dueling bandit algorithms. In this section we have included Interleaved Filtering, Beat the Mean Bandit, RUCB, RCS, SAVAGE and the Sparring and Doubler algorithms for they served as a foundation for our new approach.
 	
 \subsubsection{Interleaved Filter}
-	Yue et al.[?] propose an explore-then-exploit algorithm.
-	Starts with all the arms in the potential arms set - $\mathcal{P}$, it chooses a random arm as a candidate. 
-	The exploration step consists of a simple elimination strategy,called Interleaved Filtering (IF), which identifies the best arm with probability at least $1-\delta $ . 
-	The IF algorithm successively selects an arm and compares it to other arms (Bernoulli trial). 
-	More specifically, the currently selected arm $x$ is compared to the rest of the arms in the potential arms set $\mathcal{P}$.
-	IF maintains a mean and confidence interval for each pair of arms being compared. 
-	If an arm $y$ beats $x$ , that is, $p_{x,y}+c_{x,y}<1/2$, then $x$ is eliminated, and $y$ is compared to the rest of the arms in the potential arms set $\mathcal{P}$.
-	In addition, a simple pruning technique can be applied: if $p_{x,y}-c_{x,y}<1/2$ for an arm $y$ at any time, then $y$ can be eliminated, as it cannot be the best arm any-more (with high probability). 
-	After the exploration phase, the exploitation phase simply takes the most promising arm $x^*$ found by IF and repeatedly compares $x^*$ to itself.	
+	Yue et al.[?] propose an algorithm for a finite horizon setting. 
+	Their algorithm works for the scenario in which the preference matrix satisfies the following properties:
+
+	\begin{enumerate}
+
+		\item Strong stochastic transitivity.
+
+		\item Stochastic triangle inequality
+
+	\end{enumerate}
+	Strong stochastic transitivity means that for any triplet of arms $x \succ y \succ z$ we assume $\Delta_{x,z} \geq \max(\Delta_{x,y},\Delta_{y,z})$.
+	Stochastic triangle inequality means that for any triplet of arms $x \succ y \succ z$ we assume $\Delta_{x,z} \geq \Delta_{x,y} + \Delta_{y,z}$.
+	The regret is defined as in \eqref{eq:preference_regret}.
+	The algorithm implements an explore-then-exploit strategy. 
+	This means that the time steps $1..T$ are divided into two phases, the first serving for exploration only (learning) and the second for exploitation only. 
+	In particular, in the exploitation phase, the algorithm plays only the apparent optimal action consistently.
+	The exploration phase works by repeated elimination as follows. 
+	At each step the algorithm maintains a working set of arms that are potential optimal. 
+	It is shown that with high probability the true optimal arm is consistently in the working set. 
+	The elimination is done using a round robin tournament strategy, as shown on line~\ref{lst:line:elimination}. 
+	Each arm in the working set is compared against all the arms in the working set, until sufficient confidence is achieved to determine whether the arm must be eliminated (removed from the working set). 
+	By sufficient confidence we mean that with high probability an arm cannot be the optimal $$p_{x,y}+c_{x,y}<1/2$$
+	Apart from the round robin elimination, a pruning process is executed.
+	We explain the pruning process more precisely. 
+	As can be seen in line~\ref{lst:line:pruning}, an element $y$ is removed from the working set $\cal P$ if $$p_{x,y}-c_{x,y}<1/2$$ 
+	In words, this condition implies that $y$ is with high confidence inferior compared to the current candidate in the round robin.
+	Once a single arm is left in the working set, the algorithm compares this arm against itself until it reaches the horizon $T$.
+	The algorithm pseudo-code is presented in Figure~\ref{algo_IF}. 
+	The guarantee provided is as follows:
+
+	\begin{theorem}\label{thm:IF}[From \cite{...}]
+
+		Running the Interleaved Filter algorithm with $|X|=K$, with a finite time horizon of $T>K$, the expected regret is bounded by $R_P(T) = \mathcal{O} \left( \frac{K\log K}{\Delta^*} \log T \right)$, where $\Delta^*$ is $\Delta_{x^*,y}$ where $y$ is an arm that is only beaten by $x^*$.
+
+	\end{theorem}
+	From the analysis of the algorithm it can be seen that the algorithm returns the best arm with probability of $1-\frac{1}{T}$.
+	Correspondingly, a suboptimal arm is returned by the algorithm with probability of $\frac{1}{T}$ hence , similar to a PAC type theorem: With high probability of at least $1-\frac{1}{T}$, the estimated regret after $T$ steps is at most $\mathcal{O} \left( \frac{K\log K}{\Delta^*} \log T \right)$. The regret is defined as in \eqref{eq:preference_regret}.
 	
-	\input{InterleavedFilter.tex}
+	\begin{figure}[h]
+	\IncMargin{1em}
+		\begin{algorithm}[H]
+		\SetKwInput{KwInput}{Input}
+		
+		\KwInput{$T$,$ X,K=|X|, \delta$}
+			$ t\leftarrow 1$\\
+			$ \mathcal{P} \leftarrow X$
+			Choose $x_t \in \mathcal{P}$ randomly\\
+			$ \mathcal{P} \leftarrow \mathcal{P} \backslash x_t$\\
+			\BlankLine
+			\While{$|\mathcal{P}|>1 $}{
 
-\newpage
-
-\subsubsection{Beat The Mean Bandit}	
-	Yue and Joachims [?] propoed an elimination strategy very similar to IF. Beat the Mean (BTM) - a preference-based online learning algorithm. 
-	The difference is where IF compares each arm to all the other arms in the potential arm set, BTM picks an arm that has the least plays $n_x$ and compares it with a randomly chosen arm from the set of potential arms.
-	BTM maintains a score for each arm $\hat{P}_{x} = \frac{w_x}{n_x}$, where $w_x$ is the number of times arm $x$ has won the comparison (not taking into account which arm it was compared to.
-	The name of this algorithm comes from the idea of comparing the arm against the "mean" arm (bandit in this case).
-	The idea is beating half of the arms when comparing to the "mean" arm. 
-	BTM also maintains a confidence interval $c^*$ around the score	$\hat{P}_{x}$, using this interval arms can be removed from the potential arm set $\mathcal{P}$ if an arm is significantly low in score from "strongest" arm (the arm with the highest score).
+ 				\For{$x \in \mathcal{P}$\label{lst:line:elimination}}{
+					compare $y, x_t$\\
+					update $\hat{P}_{x_t, y}$\\
+					$t \leftarrow t+1$	
+				}
+				$c_t \leftarrow \sqrt{log(1/\delta)/t}$\\
+				\While{$\exists y \in$ s.t. $\left( \hat{P}_{x_t,y}+c_t<1/2 \right)$}{
+				$\mathcal{P} \leftarrow \mathcal{P} \backslash \{y\}$
+				}
+				\If{$\exists y \in$ s.t. $( \hat{P}_{x_t,y}-c_t <1/2 )$\label{lst:line:pruning}}{
+					$x_{t+1} \leftarrow y$\\
+					$\mathcal{P} \leftarrow \mathcal{P} \backslash \{ y \}$\\
+					$\forall x \in \mathcal{P}$ reset $\hat{P}_{y,x}$
+				}
+			}
+			\Return{$x_t \in \cal P$}
+			\caption{Interleaved Filter}
+		\end{algorithm}
+		\caption{Interleaved Filter Algorithm}\label{algo_IF}
+	\end{figure}
 	
-	\input{BeatTheMean.tex}
 
-\newpage
+\subsubsection{Beat The Mean Bandit}
+	Yue and Joachims [?] proposed an explore-then-exploit strategy, for a finite horizon setting, very similar to IF. 
+	Beat the Mean (BTM) - a preference-based online learning algorithm.
+	This algorithm is based on relaxed assumptions with regards to the IF algorithm:
+	\begin{enumerate}
+		\item Relaxed stochastic transitivity.
+		\item Stochastic triangle inequality
+	\end{enumerate}
+	Relaxed stochastic transitivity means that for any triplet of arms $x \succ y \succ z$ and for some $ \gamma \geq 1 $ we assume $\gamma\Delta_{x,z} \geq  \max(\Delta_{x,y},\Delta_{y,z})$.
+	The main idea of BTM is to maintain a score of the "Mean Bandit" (arm in our case) and eliminating arms that are inferior to it with enough confidence.
+	Similar to the IF algorithm BTM maintains a working set of potentially optimal arms.
+	At each round the algorithm picks an arm that has the least plays, $n_x$, and compares it with a randomly chosen arm from the working set.
+	Comparing an arm against random arms in the working set is functionally identical to comparing an arm against the "Mean Bandit" sampled uniformly from the working set.
+	The arm, $x$,  is empirically worst arm and is separated enough from the best arm with enough confidence as defined with:
+	\begin{equation}\label{eq:BTM_el}
+	min_{x\in \mathcal{P}} (\hat{P}_{x})+c^* \leq max_{y \in \mathcal{P}}(\hat{P}_{y})-c^*
+\end{equation}	 
+	
+	Once an arm reached \eqref{eq:BTM_el} it is eliminated from the working set. The confidence is defined as $ c^* = c_{\delta, \gamma}(n^*) $, where $c_{\delta, \gamma}(n) = 3\gamma^2 \sqrt{\frac{1}{n}\log \frac{1}{\delta}}$.
+	The algorithm pseudo-code is presented in Figure~\ref{algo_BTM}.	
+	The guarantee provided is as follows:
+	\begin{theorem}\label{thm:BTM}[From \cite{...}]
+
+		Running the Beat the Mean Bandit algorithm with $|X|=K$, with a finite time horizon of $T>K$, the expected regret is bounded by $R_P(T) = \mathcal{O} \left( \frac{\gamma^7K}{\Delta^*} \log T \right)$, where $\Delta^*$ is $\Delta_{x^*,y}$ where $y$ is an arm that is only beaten by $x^*$.
+
+	\end{theorem}	
+	Similar to the analysis of the IF algorithm it can be seen that the algorithm returns the best arm with probability of $1-\frac{1}{T}$.	
+	
+	\begin{figure}[h]
+	\IncMargin{1em}
+		\begin{algorithm}[H]
+		\SetKwInput{KwInput}{Input}
+		
+		\KwInput{$T$,$X,K=|X|, c_{\delta, \gamma}(\cdot)$}
+			$ \mathcal{P} \leftarrow X $\\
+			$ \forall x \in \mathcal{P} , n_x \leftarrow 0 $\\
+			$ \forall x \in \mathcal{P} , w_x \leftarrow 0 $\\
+			$ \forall x \in \mathcal{P} ,\hat{P}_x \leftarrow w_x / n_x$ or $0$ if $n_x = 0 $\\
+			$t \leftarrow 0$ \\
+			\BlankLine
+			\While{$|\mathcal{P}|>1$}{
+				$x_t \leftarrow argmin_{x \in \mathcal{P}} n_x$\\
+				select $y_t\in \mathcal{P}$ at random, compare $x_t$ with $y_t$\\
+				\If{$x_t$ wins}{$w_{x_t}\leftarrow w_{x_t} +1$}
+				$n_{x_t} \leftarrow n_{x_t}+1$\\ 
+				$ n^*  \leftarrow \min_{x \in \mathcal{P}} n_x$\\
+				$ c^* \leftarrow c_{\delta, \gamma}(n^*) $ or $1$ if $ n^* = 0$\\
+				\If{$min_{y\in \mathcal{P}} (\hat{P}_{y})+c^* \leq max_{x \in \mathcal{P}}(\hat{P}_{x})-c^*$}{
+					$y\leftarrow argmin_{x\in \mathcal{P}}\hat{P}_{x}$\\
+					$\forall x \in \mathcal{P}$ delete comparison with $y$ from $w_y, n_y$\\
+					$\mathcal{P} \leftarrow \mathcal{P}\backslash\{y\} $\\
+				} 
+			$t \leftarrow t+1$
+			}
+			\Return{$x_t \in \cal P$}
+			\caption{Beat the Mean Bandit}
+		\end{algorithm}
+		\caption{Beat the Mean Bandit Algorithm}\label{algo_BTM}
+	\end{figure}
 
 \subsubsection{RUCB} Relative Upper Confidence Bound by Zoghi et al. [?], adapts the most commonly used algorithm UCB [?] in the standard MAB setting to the Dueling Bandit setting. 
 	This only assumption this algorithm holds on the arms is that exists a Condorcet winner - meaning an arm that beats all the other arms on average. 
