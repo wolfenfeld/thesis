@@ -73,6 +73,80 @@ In this paper we propose several new methods for the Dueling Bandit Problem. Our
 		R(T) = \sum_{t=1}^{T} \mu(x^*) - u_t
 	\end{equation}
 	The cumulative regret shows the difference between the utility the player could have acquired if he played the best arm and the sum of utilities actually acquired.
+	
+	\subsubsection{UCB Algorithm}	
+	The most comonly used algorithm for the MAB setting ,the UCB algorithm, is used to minimize the cumulative regret for finite horizon case. 
+	It relies on finding an equal probability upper bound for all arms, as seen in line~\ref{line:ref:UCB}, according to the samples so far, called Upper Confidence Bound (hence the name). 
+	The bound for arm $x$ decreases as the number of times it had been sampled so far $n_x$ grows.
+	At each round, the sampled arm is the arm that potentially has the highest reward, either because it hadn’t been sampled enough, or because the arm’s average reward has been promising.
+	
+	The UCB algorithm gives the following guarantees:
+	
+	
+\begin{theorem}\label{thm:UCB}[From \cite{...}]
+
+		Running the UCB algorithm with $|X|=K$, with a finite time horizon of $ T > K$, the expected regret is bounded by $R(T) = \mathcal{O} \left( \left(\sum_{x\in X \backslash x^*} \frac{1}{\Delta_x} \right)\log T \right)$, where $\Delta_x$ is the gap between the best arm $x^*$ and arm $x$.
+
+	\end{theorem}		
+	Here we present a variant of UCB that uses an additional parameter $ \beta $ to balance between the exploration and exploitation of the algorithm:
+	\begin{figure}[h]
+	\IncMargin{1em}
+		\begin{algorithm}[H]
+		\SetKwInput{KwInput}{Input}
+		
+		\KwInput{$ X,K=|X|$}
+			$ t\leftarrow 1$\\
+			$\forall x \in X : \hat{\mu_x} \leftarrow 0$\\
+			\BlankLine
+			
+			\While{$t\leq T $}{
+				$x_t\leftarrow argmax_{x\in X} \left(\hat{\mu}_x + \beta \sqrt{\frac{\ln t}{n_x}}\right)$ \label{line:ref:UCB}\\
+ 				play arm $x_t$ and acquire $u_t$\\
+ 				update $\hat{\mu}_x$
+			}
+			\caption{UCB}
+		\end{algorithm}
+		\caption{UCB Algorithm}\label{algo_UCB}
+	\end{figure}
+
+	\subsubsection{Thompson Sampling Algorithm}	
+	One of the earliest algorithms, given by W. R. Thompson, dates back to 1933. The basic idea is to choose an arm to play according to its probability of being the best arm.
+	The Thompson Sampling algorithm proceeds as follows.
+	The algorithm maintains the number of successes and failures for each arm, and holds a random variable with $\beta$-distribution for each arm $\Theta_x\sim Beta(Success_x+1,Failures_x+1)$.
+	At each round all the random variables $\Theta_{x,t}$ are sampled.
+	The chosen arm is then given by $ x_t \in argmax_{x\in X} \Theta_{x,t}$. 
+	While the theoretical behaviour of Thompson sampling has remained elusive for a long time, fairly good understanding of its theoretical properties was achieved by Agrawal and Goyal [?] the first logarithmic regret bound was proved: 
+	
+	\begin{theorem}\label{thm:TS}[From \cite{...}]
+
+		Running the Thompson Sampling algorithm with $|X|=K$, with a finite time horizon of $ T > K$, the expected regret is bounded by $R(T) = \mathcal{O} \left( \left(\sum_{x\in X \backslash x^*} \frac{1}{\Delta_x^2} \right)^2 \log T \right)$, where $\Delta_x$ is is the gap between the best arm $x^*$ and arm $x$.
+
+	\end{theorem}	
+	The pseudo-code of the Thompson Sampling algorithm can be seen in Figure \ref{algo_TS}:
+	
+	\begin{figure}[h]
+	\IncMargin{1em}
+		\begin{algorithm}[H]
+		\SetKwInput{KwInput}{Input}
+		
+		\KwInput{$ X,K=|X|$}
+			$ t\leftarrow 1$\\
+			$\forall x \in X : Success_{x} \leftarrow 0$\\
+			$\forall x \in X : Fails_{x} \leftarrow 0$\\			
+			\BlankLine
+			
+			\While{$t\leq T $}{
+				$\forall x \in X : \Theta_{x,t} \sim Beta(Success_{x}+1, Fails_{x}+1)$\\
+				$x_t\leftarrow argmax(\Theta_{x,t})$\\
+ 				play arm $x_t$ and acquire $u_t$\\
+ 				$Success_{x_t} \leftarrow Success_{x_t} + u_t$\\
+ 				$Fails_{x_t} \leftarrow Fails_{x_t} + (1-u_t)$
+			}
+			\caption{Thompson Sampling}
+		\end{algorithm}
+		\caption{Thompson Sampling Algorithm}\label{algo_TS}
+	\end{figure}	
+	
 	\subsection{Dueling Bandits}
 		To formalize the problem of learning from preferences, we consider the following interactive online learning model,for the K-armed dueling bandit problem (Yue et al., 2012).
 		At each iteration $t$, the learning system presents two arms $x_t, y_t \in X$ to the learner, where $X$ is the set (either finite or infinite) of possible actions. The two arms are compared and the feedback comes in the form of a binary random variable $b_t$, declaring which arm beats the other arm.
@@ -150,7 +224,7 @@ In this paper we propose several new methods for the Dueling Bandit Problem. Our
 %		 This to be a good quantity to characterize the "damage" that is inflicted for each choice the learner makes during the Dueling Bandits game.
 		 As opposed to the standard bandit game $\Delta_{x,y}$ can be negative, in which the quantity used for the multi-armed bandit task is always positive and depends on the gap between the means of the best arm and the suboptimal arms.
 		 
-	\subsection{Probability estimation}		 
+	\subsection{Probability Estimation}		 
 		The Dueling Bandit game is played in discrete rounds, either through a finite time horizon or an infinite horizon. 
 		 As described in the previous section, the learner compares between two arms in each round $t > 0$. 
 		 And so, in each round $t$, the learner selects a pair of arms $x_t,y_t$ and observes
@@ -170,9 +244,26 @@ In this paper we propose several new methods for the Dueling Bandit Problem. Our
 		\frac{w_{x,y}}{w_{x,y}+w_{y,x}}
 	\end{equation}	 
 	As mention above, in this paper we assume that the samples are independent and identically distributed (i.i.d), $\hat{p}_{i,j}$ is a good estimate of the pairwise probability (2). 
-	As in most MAB algorithms a high probability confidence interval is obtained by the Hoeffding bound. 
+	As in most MAB algorithms a high probability confidence interval is obtained by the Hoeffding bound defined in Theorem~\ref{thm:Hoeffding}. 
 	The confidence intervals may differ from one algorithm to another, but usually it is of the form $[p_{x,y} \pm c_{x,y} ]$. 
 	According to this definition arm $x$ outperforms arm $y$ with high likelihood if $p_{x,y} + c_{x,y} > 1/2]$, and, $x$ is beaten by arm $y$ with high probability, if $p_{x,y} + c_{x,y} < 1/2]$.
+	\subsubsection{Hoeffding Inequality}	
+	As a preliminary step, we remind Hoeffding’s inequality.
+	\begin{theorem}\label{thm:Hoeffding}[From \cite{...}]
+	Suppose $\{X_1,..,X_N \}$ are independent random variables with values in the interval $[a,b]$.
+	We denote $\bar{X}_N = \sum_{i=1}^N \frac{X_i}{N}$.\\
+	If $E[\bar{X}_N] = \mu_X$, then for any $d>0$:
+	\begin{subequations}
+	\begin{equation}
+	Pr(\bar{X}_N \geq \mu_X+ d) \leq e^{-\frac{2d^2}{(b-a)^2}\cdot\frac{1}{N}}
+	\end{equation}
+	\begin{equation}
+	Pr(\bar{X}_N \leq \mu_X- d) \leq e^{-\frac{2d^2}{(b-a)^2}\cdot\frac{1}{N}}
+	\end{equation}
+	\end{subequations}
+	\end{theorem}
+	\subsection{The Relation Between Preference and Utility based Regrets}
+	
 	In the extreme case where the preference matrix $P$ is induced by \textbf{UBDB} we argue that the regret defined in 2.2.1 is the same as in 2.2.2. 
 	We will show that using the definition of the linear link function we both utility based regret and preference based regret are the same (till a factor of 2): 
 	\begin{equation}\label{eq:ref1}
@@ -192,8 +283,7 @@ $$
 	\mu(x_t)+\mu(y_t)}{2} =
 \frac{1}{2} \sum_{t=1}^T \mu(x^*)- U_{av} = \frac{1}{2}R_U(T)$$
 
-\newpage
-
+\subsection{Table of Notations}
 For the convenience of the reader we have included a table of all the definitions. 
 	\begin{table}[h]
 		\begin{tabular}{ll}
@@ -220,9 +310,30 @@ For the convenience of the reader we have included a table of all the definition
 		\end{tabular}
 	\end{table}
 
-\section{Survey of Algorithms}
+\section{Survey of Algorithms for Dueling Bandits}
 	We start by surveying dueling bandit algorithms. In this section we have included Interleaved Filtering, Beat the Mean Bandit, RUCB, RCS, SAVAGE and the Sparring and Doubler algorithms for they served as a foundation for our new approach.
+
+\subsection{Explore and Exploit Algorithms}
+	In the finite horizon case most PBDB algorithms are based on the idea of splitting the rounds into two phases, exploration and then exploitation. In the first phase the algorithm identifies the best arm with high probability. In the second phase the algorithm repeatedly compares the chosen arm to itself.
+	Such algorithm, using the above principle are called "explore-then-exploit" algorithms.
+	The main draw back for these algorithm is that $T$, the horizon, is needed to be known in advance. The horizon is needed for the algorithm to control the trade-off between exploration and exploitation and so control the regret accumulated in the event of the algorithm failed to identify the best arm.
+	To be more specific, lets assume the algorithm can identify the best arm with probability of at least $1-\delta$. We will set $\delta$ to $1/T$ and so the algorithm can guarantee that the best arm is chosen within $T$ rounds with probability greater then $1-1/T$.
+	Assuming the algorithm made a mistake and did not choose the best arm at the end of exploration phase, the regret accumulated is $1/T\cdot \mathcal{O}(T) = \mathcal{O}(1)$, since the accumulated in each round is bounded by 1.
+	Consequently, the expected regret of an explore-then-exploit algorithm is
+	\begin{equation}
+		E[R^T] \leq (1-1/T)E[R^T_A] +(1/T)\mathcal{O}(T) = \mathcal{O}(E[R_A^T]+1)
+	\end{equation}
+	The same argument holds for the case of high probability regret bounds in the explore-then-exploit framework. 
+	In summary, the performance of an explore-then-exploit algorithm is bounded by the performance of the exploration algorithm. 
 	
+	\subsection{PAC Algorithms}
+	In the infinite time horizon case several algorithm apply the following principle: returning the arm that is only approximately optimal.
+	In the standard bandit problems this means that the arm that is chosen in each round produces an expected reward that is at most $\epsilon$ shy of the optimal arm, the $\epsilon$-optimal arm.
+	In the PBDB case approximation errors are harder to define.  
+	A preference-based MAB algorithm is an ($\epsilon, \delta$)-PAC PBDB algorithm with a sample complexity $B(P,\epsilon,\delta)$, if it returns the $\epsilon$-optimal arm with probability at least $1-\delta$ , and the number of comparisons taken by the algorithm is at most $B(P,\epsilon,\delta)$.
+	The sample complexity of the learner is then the number of pairwise comparisons it makes before concluding the optimal arm, and the corresponding bound is denoted $B(P,\epsilon,\delta)$ where $P$ is defined at \eqref{eq:preference_matrix}.
+
+	\subsection{The Algorithms}
 \subsubsection{Interleaved Filter}
 	Yue et al.[?] propose an algorithm for a finite horizon setting. 
 	Their algorithm works for the scenario in which the preference matrix satisfies the following properties:
