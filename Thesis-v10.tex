@@ -264,8 +264,8 @@ In this paper we propose several new methods for the Dueling Bandit Problem. Our
 	\end{theorem}
 	\subsection{The Relation Between Preference and Utility based Regrets}
 	
-	In the extreme case where the preference matrix $P$ is induced by \textbf{UBDB} we argue that the regret defined in 2.2.1 is the same as in 2.2.2. 
-	We will show that using the definition of the linear link function we both utility based regret and preference based regret are the same (till a factor of 2): 
+	In the extreme case where the preference matrix $P$ is induced by \textbf{UBDB} we argue that the regret defined in  section 2.2.1 is the same as in  section 2.2.2. 
+	We will show that using the definition of the linear link function both utility based regret and preference based regret are the same (upto a factor of 2): 
 	\begin{equation}\label{eq:ref1}
 		p_{x^*,y} = \phi_{lin}(\mu(x^*),\mu(y)) = \frac{1 +\mu(y)-\mu(x^*)}{2}
 	\end{equation}
@@ -311,24 +311,30 @@ For the convenience of the reader we have included a table of all the definition
 	\end{table}
 
 \section{Survey of Algorithms for Dueling Bandits}
-	We start by surveying dueling bandit algorithms. In this section we have included Interleaved Filtering, Beat the Mean Bandit, RUCB, RCS, SAVAGE and the Sparring and Doubler algorithms for they served as a foundation for our new approach.
+	We start by surveying dueling bandit algorithms. In this section we have included Interleaved Filtering, Beat the Mean Bandit, RUCB, RCS, SAVAGE and the Sparring and Doubler algorithms for they served as a foundation for our new approach. We categorize these algorithm based on the following criteria - Explore and Exploit algorithms and Pure Exploitation algorithms.
 
 \subsection{Explore and Exploit Algorithms}
 	In the finite horizon case most PBDB algorithms are based on the idea of splitting the rounds into two phases, exploration and then exploitation. In the first phase the algorithm identifies the best arm with high probability. In the second phase the algorithm repeatedly compares the chosen arm to itself.
 	Such algorithm, using the above principle are called "explore-then-exploit" algorithms.
-	The main draw back for these algorithm is that $T$, the horizon, is needed to be known in advance. The horizon is needed for the algorithm to control the trade-off between exploration and exploitation and so control the regret accumulated in the event of the algorithm failed to identify the best arm.
-	To be more specific, lets assume the algorithm can identify the best arm with probability of at least $1-\delta$. We will set $\delta$ to $1/T$ and so the algorithm can guarantee that the best arm is chosen within $T$ rounds with probability greater then $1-1/T$.
-	Assuming the algorithm made a mistake and did not choose the best arm at the end of exploration phase, the regret accumulated is $1/T\cdot \mathcal{O}(T) = \mathcal{O}(1)$, since the accumulated in each round is bounded by 1.
+	The main draw back for these algorithm is that $T$, the horizon, is needed to be known in advance. The horizon is needed for the algorithm to control the trade-off between exploration and exploitation and to control the regret accumulated in the event of failure to identify the best arm.
+	To be more specific, let's assume the algorithm can identify the best arm with probability of at least $1-\delta$. We will set $\delta$ to $1/T$ and so the algorithm can guarantee that the best arm is chosen within $T$ rounds with probability greater then $1-1/T$.
+	Let's define $R_{explore}(T),R_{exploit}(T)$, the regrets for the exploration phase and exploitation phase, that define the total regret:
+	$$R(T) = R_{explore}(T)+R_{exploit}(T)$$
+	Assuming the algorithm made a mistake and did not choose the best arm at the end of exploration phase, the regret accumulated , $R_{explore}(T)+R_{exploit}(T)$ is at most $\mathcal{O}(T)$, since the regret accumulated in each round is bounded by 1.
+	Assuming the algorithm did choose the best arm $R_{exploit}(T)$ is $0$.
 	Consequently, the expected regret of an explore-then-exploit algorithm is
 	\begin{equation}
-		E[R^T] \leq (1-1/T)E[R^T_A] +(1/T)\mathcal{O}(T) = \mathcal{O}(E[R_A^T]+1)
+		E[R(T)] \leq (1-1/T)E[R_{explore}(T)] +(1/T)\mathcal{O}(T) = \mathcal{O}(E[R_{explore}(T)]+1)
 	\end{equation}
 	The same argument holds for the case of high probability regret bounds in the explore-then-exploit framework. 
 	In summary, the performance of an explore-then-exploit algorithm is bounded by the performance of the exploration algorithm. 
+	Although Explore and Exploit algorithms need to know the Horizon $T$ in advance, by using a simple workaround ,the "Squaring Trick", these algorithm can be used in the infinite horizon setting. An estimated horizon $\hat{T}$ is submitted to the algorithm and once the algorithm reaches $t=\hat{T}$ the horizon is set to $\hat{T}^2$, this process continues till the algorithm terminates, and hence the name "Squaring Trick".
 	
-	\subsection{PAC Algorithms}
-	In the infinite time horizon case several algorithm apply the following principle: returning the arm that is only approximately optimal.
-	In the standard bandit problems this means that the arm that is chosen in each round produces an expected reward that is at most $\epsilon$ shy of the optimal arm, the $\epsilon$-optimal arm.
+	\subsection{Pure Exploration Algorithms}
+	In the infinite time horizon case , in which no horizon is specified and the evaluation process continues indefinitely.
+	In this case it is not sufficient for the algorithm to maximize accuracy or minimize regret after a single horizon is reached. 
+	Instead, it must minimize regret by rapidly decreasing the frequency of comparisons involving suboptimal arms, particularly those that fare worse in comparison to the best arm.
+	In the standard bandit problems, the arm that is chosen in each round produces an expected reward that is at most $\epsilon$ shy of the optimal arm, the $\epsilon$-optimal arm.
 	In the PBDB case approximation errors are harder to define.  
 	A preference-based MAB algorithm is an ($\epsilon, \delta$)-PAC PBDB algorithm with a sample complexity $B(P,\epsilon,\delta)$, if it returns the $\epsilon$-optimal arm with probability at least $1-\delta$ , and the number of comparisons taken by the algorithm is at most $B(P,\epsilon,\delta)$.
 	The sample complexity of the learner is then the number of pairwise comparisons it makes before concluding the optimal arm, and the corresponding bound is denoted $B(P,\epsilon,\delta)$ where $P$ is defined at \eqref{eq:preference_matrix}.
@@ -346,7 +352,7 @@ For the convenience of the reader we have included a table of all the definition
 
 	\end{enumerate}
 	Strong stochastic transitivity means that for any triplet of arms $x \succ y \succ z$ we assume $\Delta_{x,z} \geq \max(\Delta_{x,y},\Delta_{y,z})$.
-	Stochastic triangle inequality means that for any triplet of arms $x \succ y \succ z$ we assume $\Delta_{x,z} \geq \Delta_{x,y} + \Delta_{y,z}$.
+	Stochastic triangle inequality means that for any triplet of arms $x \succ y \succ z$ we assume $\Delta_{x,z} \leq \Delta_{x,y} + \Delta_{y,z}$.
 	The regret is defined as in \eqref{eq:preference_regret}.
 	The algorithm implements an explore-then-exploit strategy. 
 	This means that the time steps $1..T$ are divided into two phases, the first serving for exploration only (learning) and the second for exploitation only. 
@@ -354,24 +360,25 @@ For the convenience of the reader we have included a table of all the definition
 	The exploration phase works by repeated elimination as follows. 
 	At each step the algorithm maintains a working set of arms that are potential optimal. 
 	It is shown that with high probability the true optimal arm is consistently in the working set. 
-	The elimination is done using a round robin tournament strategy, as shown on line~\ref{lst:line:elimination}. 
+	The elimination is done using a round robin tournament strategy, as shown on line~\ref{lst:line:rr} of algorithm~\ref{algo_IF}. 
 	Each arm in the working set is compared against all the arms in the working set, until sufficient confidence is achieved to determine whether the arm must be eliminated (removed from the working set). 
-	By sufficient confidence we mean that with high probability an arm cannot be the optimal $$p_{x,y}+c_{x,y}<1/2$$
+	By sufficient confidence we mean that with high probability an arm cannot be the optimal. This is encoded in the following prediction(line~\ref{lst:line:elimination}):
+	 $$p_{x,y}+c_{x,y}<1/2$$
 	Apart from the round robin elimination, a pruning process is executed.
 	We explain the pruning process more precisely. 
 	As can be seen in line~\ref{lst:line:pruning}, an element $y$ is removed from the working set $\cal P$ if $$p_{x,y}-c_{x,y}<1/2$$ 
 	In words, this condition implies that $y$ is with high confidence inferior compared to the current candidate in the round robin.
-	Once a single arm is left in the working set, the algorithm compares this arm against itself until it reaches the horizon $T$.
+	Once a single arm is left in the working set, the algorithm enters the exploitation phase.
 	The algorithm pseudo-code is presented in Figure~\ref{algo_IF}. 
 	The guarantee provided is as follows:
 
 	\begin{theorem}\label{thm:IF}[From \cite{...}]
 
-		Running the Interleaved Filter algorithm with $|X|=K$, with a finite time horizon of $T>K$, the expected regret is bounded by $R_P(T) = \mathcal{O} \left( \frac{K\log K}{\Delta^*} \log T \right)$, where $\Delta^*$ is $\Delta_{x^*,y}$ where $y$ is an arm that is only beaten by $x^*$.
+		Running the Interleaved Filter algorithm with $|X|=K$, with a finite time horizon of $T>K$, the expected regret is bounded by $R_P(T) = \mathcal{O} \left( \frac{K\log K}{\Delta_{x^*,y}} \log T \right)$, where $y$ is an arm that is only beaten by $x^*$.
 
 	\end{theorem}
 	From the analysis of the algorithm it can be seen that the algorithm returns the best arm with probability of $1-\frac{1}{T}$.
-	Correspondingly, a suboptimal arm is returned by the algorithm with probability of $\frac{1}{T}$ hence , similar to a PAC type theorem: With high probability of at least $1-\frac{1}{T}$, the estimated regret after $T$ steps is at most $\mathcal{O} \left( \frac{K\log K}{\Delta^*} \log T \right)$. The regret is defined as in \eqref{eq:preference_regret}.
+	Correspondingly, a suboptimal arm is returned by the algorithm with probability of $\frac{1}{T}$ hence , similar to a PAC type argument: With high probability of at least $1-\frac{1}{T}$, the estimated regret after $T$ steps is at most $\mathcal{O} \left( \frac{K\log K}{\Delta^*} \log T \right)$. The regret is defined as in \eqref{eq:preference_regret}.
 	
 	\begin{figure}[h]
 	\IncMargin{1em}
@@ -386,13 +393,13 @@ For the convenience of the reader we have included a table of all the definition
 			\BlankLine
 			\While{$|\mathcal{P}|>1 $}{
 
- 				\For{$x \in \mathcal{P}$\label{lst:line:elimination}}{
+ 				\For{$x \in \mathcal{P}$\label{lst:line:rr}}{
 					compare $y, x_t$\\
 					update $\hat{P}_{x_t, y}$\\
 					$t \leftarrow t+1$	
 				}
 				$c_t \leftarrow \sqrt{log(1/\delta)/t}$\\
-				\While{$\exists y \in$ s.t. $\left( \hat{P}_{x_t,y}+c_t<1/2 \right)$}{
+				\While{$\exists y \in$ s.t. $\left( \hat{P}_{x_t,y}+c_t<1/2 \right)$\label{lst:line:elimination}}{
 				$\mathcal{P} \leftarrow \mathcal{P} \backslash \{y\}$
 				}
 				\If{$\exists y \in$ s.t. $( \hat{P}_{x_t,y}-c_t <1/2 )$\label{lst:line:pruning}}{
@@ -419,22 +426,21 @@ For the convenience of the reader we have included a table of all the definition
 	Relaxed stochastic transitivity means that for any triplet of arms $x \succ y \succ z$ and for some $ \gamma \geq 1 $ we assume $\gamma\Delta_{x,z} \geq  \max(\Delta_{x,y},\Delta_{y,z})$.
 	The main idea of BTM is to maintain a score of the "Mean Bandit" (arm in our case) and eliminating arms that are inferior to it with enough confidence.
 	Similar to the IF algorithm BTM maintains a working set of potentially optimal arms.
-	At each round the algorithm picks an arm that has the least plays, $n_x$, and compares it with a randomly chosen arm from the working set.
+	At each round the algorithm picks an arm that has the least plays in the corresponding current history, $n_x$, and compares it with a randomly chosen arm from the working set.
 	Comparing an arm against random arms in the working set is functionally identical to comparing an arm against the "Mean Bandit" sampled uniformly from the working set.
-	The arm, $x$,  is empirically worst arm and is separated enough from the best arm with enough confidence as defined with:
+	The arm, $x$,  that is empirically worst arm and is separated enough from the best arm with enough confidence is defined using:
 	\begin{equation}\label{eq:BTM_el}
 	min_{x\in \mathcal{P}} (\hat{P}_{x})+c^* \leq max_{y \in \mathcal{P}}(\hat{P}_{y})-c^*
 \end{equation}	 
-	
-	Once an arm reached \eqref{eq:BTM_el} it is eliminated from the working set. The confidence is defined as $ c^* = c_{\delta, \gamma}(n^*) $, where $c_{\delta, \gamma}(n) = 3\gamma^2 \sqrt{\frac{1}{n}\log \frac{1}{\delta}}$.
+	Once an arm reached \eqref{eq:BTM_el} (see line~\ref{alg:BTM:elimination}) it is eliminated from the working set. The confidence is defined as $ c^* = c_{\delta, \gamma}(n^*) $, where $c_{\delta, \gamma}(n) = 3\gamma^2 \sqrt{\frac{1}{n}\log \frac{1}{\delta}}$.
 	The algorithm pseudo-code is presented in Figure~\ref{algo_BTM}.	
 	The guarantee provided is as follows:
 	\begin{theorem}\label{thm:BTM}[From \cite{...}]
 
-		Running the Beat the Mean Bandit algorithm with $|X|=K$, with a finite time horizon of $T>K$, the expected regret is bounded by $R_P(T) = \mathcal{O} \left( \frac{\gamma^7K}{\Delta^*} \log T \right)$, where $\Delta^*$ is $\Delta_{x^*,y}$ where $y$ is an arm that is only beaten by $x^*$.
+		Running the Beat the Mean Bandit algorithm with $|X|=K$, with a finite time horizon of $T>K$, the expected regret is bounded by $R_P(T) = \mathcal{O} \left( \frac{\gamma^7K}{\Delta_{x^*,y}} \log T \right)$, where $y$ is an arm that is only beaten by $x^*$.
 
 	\end{theorem}	
-	Similar to the analysis of the IF algorithm it can be seen that the algorithm returns the best arm with probability of $1-\frac{1}{T}$.	
+	Similarly to the analysis of the IF algorithm it can be seen that the algorithm returns the best arm with probability of $1-\frac{1}{T}$.	
 	
 	\begin{figure}[h]
 	\IncMargin{1em}
@@ -455,7 +461,7 @@ For the convenience of the reader we have included a table of all the definition
 				$n_{x_t} \leftarrow n_{x_t}+1$\\ 
 				$ n^*  \leftarrow \min_{x \in \mathcal{P}} n_x$\\
 				$ c^* \leftarrow c_{\delta, \gamma}(n^*) $ or $1$ if $ n^* = 0$\\
-				\If{$min_{y\in \mathcal{P}} (\hat{P}_{y})+c^* \leq max_{x \in \mathcal{P}}(\hat{P}_{x})-c^*$}{
+				\If{$min_{y\in \mathcal{P}} (\hat{P}_{y})+c^* \leq max_{x \in \mathcal{P}}(\hat{P}_{x})-c^*$ \label{alg:BTM:elimination}}{
 					$y\leftarrow argmin_{x\in \mathcal{P}}\hat{P}_{x}$\\
 					$\forall x \in \mathcal{P}$ delete comparison with $y$ from $w_y, n_y$\\
 					$\mathcal{P} \leftarrow \mathcal{P}\backslash\{y\} $\\
@@ -468,27 +474,168 @@ For the convenience of the reader we have included a table of all the definition
 		\caption{Beat the Mean Bandit Algorithm}\label{algo_BTM}
 	\end{figure}
 
-\subsubsection{RUCB} Relative Upper Confidence Bound by Zoghi et al. [?], adapts the most commonly used algorithm UCB [?] in the standard MAB setting to the Dueling Bandit setting. 
-	This only assumption this algorithm holds on the arms is that exists a Condorcet winner - meaning an arm that beats all the other arms on average. 
-	Similar the the UCB algorithm the RUCB algorithm, this algorithm is based on the "optimism in the face of uncertainty" principle, meaning that the arms that are selected hold the highest pairwise upper bounds - $u_{x_t,y_t}$.
-	In each round, RUCB selects the arms to compare from the set of potential Condorcet winners, meaning the set of arms for which all $u_{x_t,y_t}$ values are above $1/2$.
-	Then $x_t$ is compared to the arm $y_t = argmax_{y} u_{y,x_t}$, in order to minimize regret, taking into account the optimistic estimates. 
-	In the analysis of the infinite horizon RUCB algorithm, both expected and high probability regret bounds are provided and both bounds are $O(K log T)$.  
+	\subsubsection{RUCB} Relative Upper Confidence Bound by Zoghi et al. [?], adapts the most commonly used algorithm UCB [?] in the standard MAB setting to the Dueling Bandit setting.
+	The algorithm is based on the assumption that a Condorcet winner exists - meaning an arm that beats all the other arms on average. 
+	Similar the the UCB algorithm the RUCB algorithm maintains the upper confidence bound $u_{x_t,y_t}$, for each pair of arms, as seen in line~\ref{alg:rucb:line:ucb_set}.
+	On each round, RUCB selects the arms to compare from the set of potential Condorcet winners, meaning the set of arms for which all $u_{x_t,y_t}$ values are above $1/2$.
+	After selecting the set of potential Condercet winners the algorithm selects the pair of arms with the highest upper confidence bound $u_{x_t,y_t}$, following the "optimism in the face of uncertainty" principle same as the UCB algorithm.
+	Note that in line~\ref{alg:rucb:line:ucb_choose_set} the comparisons are based on $u_{x_t,y_t}$ and on line~\ref{alg:rucb:line:ucb_choose} the comparisons are based on $u_{y_t,x_t}$ making it more difficult for the algorithm to compare an arm against itself.
+	Thus, RUCB strives to avoid auto-comparisons until there is great certainty that $x_t$ is indeed the Condorcet winner.
+	The RUCB algorithm guarantees the following:
+	\begin{theorem}\label{thm:BTM}[From \cite{...}]
+
+		Running the RUCB algorithm with $|X|=K$, with a finite time horizon of $T>K$, the expected regret is bounded by $R_P(T) = \mathcal{O} \left( K log T \right)$.
+
+	\end{theorem}
+	The algorithms pseudo-code is presented in Figure~\ref{algo_RUCB}.
+	\begin{figure}[h]
+	\IncMargin{1em}
+		\begin{algorithm}[H]
+		\SetKwInput{KwInput}{Input}
+		
+		\KwInput{$T$,$X,K=|X|, \alpha >1/2,T \in \{1,2,... \}\cup\{\infty\}$}
+		$ W = [w_{x,y}]\leftarrow 0_{K \times K} $\\
+		\BlankLine
+		\For{$t =1,2..,T $}{
+			$U = [u_{x,y}] \leftarrow \frac{W}{W+W^T} +\sqrt{\frac{\alpha \cdot \ln(t)}{W+W^T}}$ \label{alg:rucb:line:ucb_set}\\
+			$\forall x \in X : u_{x,x} \leftarrow 0 $\\
+			Pick any $x_t$ that satisfies $u_{x_t,x} \geq 1/2, \forall x$. \label{alg:rucb:line:ucb_choose_set}\\
+			If no $x_t$ exists pic $x_t$ randomly from $X$.\\
+			$y_t \leftarrow argmax_{y} u_{y,x_t}$\label{alg:rucb:line:ucb_choose}\\
+			Compare arms $x_t$ and $y_t$ and increment $w_{x_t, y_t}$ or $w_{y_t, x_t}$ depending on which arm won. 
+} 
+			\caption{RUCB}
+		\end{algorithm}
+		\caption{RUCB Algorithm}\label{algo_RUCB}
+	\end{figure}
 	
-	\input{RUCB.tex}
 	\newpage
 \subsubsection{RCS}
-	(Munos et al., 2014) Relative Confidence Sampling is very similar to RUCB in the manner that it aims to minimize cumulative regret and it does not eliminate arms from a potential set of arms.
-	Although RCS is very similar to the RUCB algorithm it differs from it by sampling arms from a set of arms instead of picking an arm from the set of potential Condorcet winners.  
-	The main idea behind this sampling technique is to use the superior performance of Thompson Sampling [?], in the same manner it is used in the K-armed bandit setting. 
-
-	\input{RCS.tex}
+	(Munos et al., 2014) Relative Confidence Sampling is very similar to RUCB in the manner that it aims to minimize cumulative regret and it does not eliminate arms from a working set of arms.
+	Similar to the RUCB algorithm, the RCS algorithm's only assumption is the existence of a Condorcet winner.
+	On each round the algorithm simulates a tournament between all the arms, against all the arms. 
+	The simulation is conducted, as seen on line~\ref{alg:rcs:simulation}, according to a random variable $\Theta_{x,y} $	with $Beta(\alpha,\beta)$ distribution. 
+	The hyper-parameters, $\alpha,\beta$, are $w_{x,y}+1,w_{y,x}+1$ accordingly. Where $w_{x,y}$ is the number of times arm $x$ beat arm $y$.
+	The main idea behind this simulation technique is to use the superior performance of Thompson Sampling [?], in the same manner it is used in the K-armed bandit setting. 
+	Once the simulation is over, similar to the RUCB algorithm, the RCS algorithm select a set of potential Condorcet winners, as seen on line~\ref{alg:rcs:select_x}, and by this the algorithm selects arm $x_t$.
+	On line~\ref{alg:rcs:select_y} the algorithm selects the arm $y_t$ according to the "optimism in the face of uncertainty" principle same as the UCB algorithm.
+	After both arms are selected and compared, the algorithm updates $w_{x,y}$ for all the arms and continues to the next round. 
+	Although no theoretical guarantees where presented in [?], according to the experiments in [?], RCS outperforms the RUCB algorithm for a small number of arms (less then 40).	
+	The algorithms pseudo-code is presented in Figure~\ref{algo_RCS}.
+	\begin{figure}[h]
+	\IncMargin{1em}
+		\begin{algorithm}[H]
+		\SetKwInput{KwInput}{Input}
+		
+		\KwInput{$T$,$X,K=|X|, \alpha >1/2,T \in \{1,2,... \}\cup\{\infty\}$}
+		$ W = [w_{x,y}]\leftarrow 0_{K \times K} $\\
+		\BlankLine
+		\For{$t =1,2..,T $}{
+	$\Theta(t) = \frac{\mathds{1}_{K\times K}}{2}$\\
+	\For{$x,y \in X$ s.t. $index(x)<index(y)$ \label{alg:rcs:simulation}}{
+		 $\Theta_{x,y}(t) \sim Beta(w_{x,y}+1,w_{y,x}+1 )$\\
+		 $\Theta_{y,x}(t) = 1-\Theta_{x,y}(t)$
+		 }
+	Pick any $x_t$ that satisfies $\Theta_{x_t,x} \geq 1/2, \forall x$.\label{alg:rcs:select_x}\\ 
+	If no $x_t$ exists pic $x_t$ that was chosen list often.\\
+	$U = [u_{x,y}]\leftarrow \frac{W}{W+W^T} +\sqrt{\frac{\alpha \cdot \ln(t)}{W+W^T}}$ \\
+	$U_{z,z} \leftarrow 0 $ for each $z \in X$\\
+	$y_t \leftarrow argmax_{y} u_{y,x_t}$\label{alg:rcs:select_y}\\
+	Compare arms $x_t$ and $y_t$ and increment $w_{x_t, y_t}$ or $w_{y_t, x_t}$ depending on which arm won. 
+} 
+			\caption{RUCB}
+		\end{algorithm}
+		\caption{RUCB Algorithm}\label{algo_RCS}
+	\end{figure}	
+	
 	\newpage
+	
+	
+	
 \subsubsection{SAVAGE}
-	(Uryoy et al., 2013) works by reducing a box-shaped confidence set until a single arm remains.
-	Sensitivity analysis of variables for generic exploration (SAVAGE) is a more recent algorithm that performs better than both IF and BTM by a wide margin when the number of arms is small. 
-	SAVAGE compares pairs of arms uniformly randomly until there exists a pair for which one of the arms beats the other by a wide margin, in which case the loser is removed from the pool of arms under consideration.
-\input{savage.tex}
+	(Uryoy et al., 2013) Sensitivity Analysis of Variables for Generic Exploration (SAVAGE) algorithm is another explore-then-exploit algorithm.
+	As in RUCB and RCS this algorithm runs under the assumption that a Condorcet winner exists.
+	In general, the algorithm compares  pairs arms until there exists a pair for which one of the arms beats the other by a wide margin, in which case the loser is removed from the working set.
+	More precisely, in each round, the two arms,$x_t$and $y_t$, with the least amount of times are chosen, as seen on line~\ref{alg:savage:select_xy}.
+	The pair of arms are compared and given a score, $u_{x_t, y_t}$ (Line~\ref{alg:savage:score_xy}).
+	An arm that does not uphold the condition
+	$$ \sum_{y}\mathbbm{1}(u_{x,y} > 0.5) < K $$
+	is eliminated from the working set.
+	This condition is very similar to the condition in the RUCB algorithm.
+	This algorithm guarantees the following:
+	\begin{theorem}\label{thm:SAVAGE}[From \cite{...}]
+
+		Running the SAVAGE algorithm with $|X|=K$, with a finite time horizon of $T>K$, the expected regret is bounded by $R_P(T) = \mathcal{O} \left( K^2 log T \right)$.
+
+	\end{theorem}
+	The algorithms pseudo-code is presented in Figure~\ref{algo_SAVAGE}.
+\begin{figure}[h]
+	\IncMargin{1em}
+		\begin{algorithm}[H]
+		\SetKwInput{KwInput}{Input}
+		
+		\KwInput{$X ,K=|X|, \alpha$}
+			$ \mathcal{P} \leftarrow X $\\
+			$ \forall x \in \mathcal{P} , n_x \leftarrow 0 $\\
+		\BlankLine
+		\While{$|\mathcal{P}|>1$}{			
+			$x_t, y_t \leftarrow  argmin_{x}{n_{x}}$\label{alg:savage:select_xy}\\
+			Compare arms $x_t, y_t$\\
+			$n_{x_t} \leftarrow n_{x_t}+1$\\
+			$n_{y_t} \leftarrow n_{y_t}+1$\\
+			Update $W$\\
+			$U = [u_{x_t, y_t}]\leftarrow \frac{W}{W+W^T} +\sqrt{\frac{\alpha}{W+W^T}}$\label{alg:savage:score_xy}\\
+			$\mathcal{P}  \leftarrow \mathcal{P}\backslash \left\{x\mid 				\sum_{y}\mathbbm{1}(u_{x,y} > 0.5) < K)\right\}$\\
+			$t \leftarrow t+1$
+		}
+		\Return{ $x_t $}
+			\caption{SAVAGE}
+		\end{algorithm}
+		\caption{SAVAGE Algorithm}\label{algo_SAVAGE}
+	\end{figure}
+	\newpage
+	\subsubsection{Doubler}
+	(Ailon et al., 2014) handles a large or possibly infinite set of arms $X$ for the infinite horizon case.
+	The Doubler algorithm is of the UBDB case, as opposed to the previous algorithm discussed that are of the PBDB case.
+	In his their work, Ailon et al. uses MAB algorithm black boxes, defined as Singleton Bandits Machine (SBM) - closed computational units with internal timer and memory.
+	A SBM $S$ supports three operations: reset, advance and feedback. The reset operation simply clears the SBM's state.
+	The advance operation returns the next chosen arm, and the feedback operation returns the utility the arm produced.
+	This algorithm is best explained by thinking of a competition between two players; the first controls the choice of the left arm and the second player controls the right arm. 
+	The objective of each player is to win as many rounds possible.
+	This algorithm divides the time axis to exponentially growing epochs  $p$ (First epoch is 2 rounds, second epoch is 4, third epoch is 8 and so forth).
+	In each epoch, the left player plays according to some fixed (stochastic) strategy, according to the multi-set $\mathcal{L}$, while the right one plays adaptively according to a strategy provided by a SBM. 
+	At the beginning of a new epoch (line~\ref{line:new_epoch}) the distribution governing the left arm changes in a way that mimics the actions of the right arm in the previous epoch.
+	The algorithm guarantees the following:
+	\begin{theorem}\label{thm:Doubler}[From \cite{...}]
+
+		Running the Doubler algorithm with $|X|=K$, with a finite time horizon of $T>K$, the expected regret is bounded by $R_U(T) = \mathcal{O} \left(H log^2 T \right)$. Where $H=\sum_{i=1}^K \Delta^{-1}_i$ and the regret is defined at \eqref{eq:utility_regret}.
+
+	\end{theorem}
+	The algorithms pseudo-code is presented in Figure~\ref{algo_Doubler}.
+	\begin{figure}[h]
+	\IncMargin{1em}
+		\begin{algorithm}[H]
+		\SetKwInput{KwInput}{Input}
+		
+		\KwInput{$X, \mathcal{L} = \{x_1\}$, $\mathcal{S}$}
+		\BlankLine
+		\emph{Initialization}\\
+		$p\leftarrow 1$\\
+		\While{True}{
+			reset($\mathcal{S}$) \label{line:new_epoch}\\
+			\For{$t = 2^{p-1}$ \KwTo $2^{p}$}{
+				choose $x_t$ uniformly from $\mathcal{L}$\\
+				$y_t \leftarrow advance(\mathcal{S})$\\
+				play $(x_t , y_t )$, observe choice $b_t$\\
+				feedback $\left(\mathcal{S},b_t\right)$\\
+			}
+			$\mathcal{L} \leftarrow$the multi-set of arms played as y t in the last for-loop.\\
+		$p \rightarrow p+1$
+	}
+			\caption{Doubler}
+		\end{algorithm}
+		\caption{Doubler Algorithm}\label{algo_Doubler}
+	\end{figure}
 
 \subsubsection{Sparring}
 	(Ailon et al., 2014) works by drawing a pair of arms from two SBM's in each round and comparing them as all the previous algorithms. Once observing the preference the algorithm updates the preferred (according to the observation) SBM.  
@@ -502,22 +649,7 @@ For the convenience of the reader we have included a table of all the definition
 		In our work  we have experimented with both SBMs black and white boxes. The configuration that showed the best result with minimum regret, is the following: 
 		\input{SparringTS.tex}
 		
-	\subsubsection{Doubler}
-(Ailon et al., 2014) handles a large or possibly infinite set of arms $X$. 
-\\
-This algorithm is best explained by thinking of a competition between
-two players; the first controls the choice of the left arm and
-the second player controls the right arm. The objective of each
-player is to win as many rounds possible.
-\\
-This algorithm divides the time axis to exponentially growing epochs (First epoch is 2 rounds, second epoch is 4, third epoch is 8 and so forth).
-In each epoch, the left player plays according to some fixed
-(stochastic) strategy, while the right one plays adaptively according to a strategy provided by a SBM. At the beginning of a new epoch the distribution governing the left arm changes in a way that mimics the actions of the right arm in the previous epoch.\\
-		\input{Doubler.tex}	
-		\\
-		In the finite case, one may set the SBM S to the standard
-UCB, and obtain according to Corollary 3.3 the regret of Doubler is at most $O(H \log^2 (T))$ where $H=\sum_{i=1}^K \Delta^{-1}_i$.
-\newpage
+	
 
 \section{Our Approach}	
 		
@@ -686,7 +818,7 @@ We will start with displaying the results for 7 arms.
 From Figure 1 we can clearly see that the SAVAGE and Doubler algorithms are outperformed by the other algorithms and so will be left out from the next figures.
 \begin{figure}[h!]
 \centering
-  \includegraphics[scale=0.5]{figures/all_MQ2007_7arms.png}
+  \includegraphics[scale=0.5, natwidth=610,natheight=642]{figures/all_MQ2007_7arms.png}
   \caption{Utility Based Regret with 7 Arms}
 \end{figure}
 
@@ -694,7 +826,7 @@ For a larger number of arms we can see that RCS and RUCB are outperformed by the
 
 \begin{figure}[h!]
 \centering
-  \includegraphics[scale=0.5]{figures/all_MQ2007_24arms.png}
+  \includegraphics[scale=0.5, natwidth=610,natheight=642]{figures/all_MQ2007_24arms.png}
   \caption{Utility Based Regret with 24 Arms}
 \end{figure}
 
@@ -708,19 +840,19 @@ We can see the clear advantage of using the Sparring algorithm over the RCS algo
 \centering
 \begin{subfigure}{.5\textwidth}
   \centering
-  \includegraphics[scale=0.3]{figures/rcs_sparring_MQ2007_7arms.png}
+  \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/rcs_sparring_MQ2007_7arms.png}
   \caption{7 Arms}
   \label{fig:sub1}
 \end{subfigure}%
 \begin{subfigure}{.5\textwidth}
   \centering
-  \includegraphics[scale=0.3]{figures/rcs_sparring_MQ2007_16arms.png}
+  \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/rcs_sparring_MQ2007_16arms.png}
   \caption{16 Arms}
   \label{fig:sub2}
 \end{subfigure}
 \begin{subfigure}{.5\textwidth}
   \centering
-  \includegraphics[scale=0.3]{figures/rcs_sparring_MQ2007_46arms.png}
+  \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/rcs_sparring_MQ2007_46arms.png}
   \caption{46 Arms}
   \label{fig:sub2}
 \end{subfigure}
@@ -736,7 +868,7 @@ With a larger number of arms we can see that Sparring out-performs the RCS algor
 Now lets look at the general regret (as defined section 2.2). Here we used 46 arms:
 \begin{figure}[h!]
   \centering
-     \includegraphics[scale=0.4]{figures/rcs_sparring_MQ2007_general.png} 
+     \includegraphics[scale=0.4, natwidth=410,natheight=442]{figures/rcs_sparring_MQ2007_general.png} 
   \caption{RCS Versus Sparring with Preference Based Regret with 46 Arms}
 \end{figure}
 
@@ -748,19 +880,19 @@ Now lets have a look at the Doubler algorithm using the same data set.
 \centering
 \begin{subfigure}{.5\textwidth}
   \centering
-  \includegraphics[scale=0.3]{figures/doubler_sparring_MQ2007_7arms.png}
+  \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/doubler_sparring_MQ2007_7arms.png}
   \caption{7 Arms}
   \label{fig:sub1}
 \end{subfigure}%
 \begin{subfigure}{.5\textwidth}
   \centering
-  \includegraphics[scale=0.3]{figures/doubler_sparring_MQ2007_16arms.png}
+  \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/doubler_sparring_MQ2007_16arms.png}
   \caption{16 Arms}
   \label{fig:sub2}
 \end{subfigure}
 \begin{subfigure}{.5\textwidth}
   \centering
-  \includegraphics[scale=0.3]{figures/doubler_sparring_MQ2007_46arms.png}
+  \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/doubler_sparring_MQ2007_46arms.png}
   \caption{46 Arms}
   \label{fig:sub2}
 \end{subfigure}
@@ -771,7 +903,7 @@ Now lets have a look at the Doubler algorithm using the same data set.
 The general regret:
 \begin{figure}[h!]
   \centering
-     \includegraphics[scale=0.2]{figures/doubler_sparring_MQ2007_general.png} 
+     \includegraphics[scale=0.2, natwidth=410,natheight=442]{figures/doubler_sparring_MQ2007_general.png} 
   \caption{Doubler Versus Sparring with Preference Based Regret with 46 Arms}
 \end{figure}
 
@@ -782,19 +914,19 @@ Now lets have a look at the Improved Doubler algorithm using the same data set.
 \centering
 \begin{subfigure}{.5\textwidth}
   \centering
-  \includegraphics[scale=0.3]{figures/improved_doubler_sparring_MQ2007_7arms.png}
+  \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/improved_doubler_sparring_MQ2007_7arms.png}
   \caption{7 Arms}
   \label{fig:sub1}
 \end{subfigure}%
 \begin{subfigure}{.5\textwidth}
   \centering
-  \includegraphics[scale=0.3]{figures/improved_doubler_sparring_MQ2007_16arms.png}
+  \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/improved_doubler_sparring_MQ2007_16arms.png}
   \caption{16 Arms}
   \label{fig:sub2}
 \end{subfigure}
 \begin{subfigure}{.5\textwidth}
   \centering
-  \includegraphics[scale=0.3]{figures/improved_doubler_sparring_MQ2007_46arms.png}
+  \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/improved_doubler_sparring_MQ2007_46arms.png}
   \caption{46 Arms}
   \label{fig:sub2}
 \end{subfigure}
@@ -805,7 +937,7 @@ Now lets have a look at the Improved Doubler algorithm using the same data set.
 The general regret:
 \begin{figure}[h!]
   \centering
-     \includegraphics[scale=0.3]{figures/improved_doubler_sparring_MQ2007_general.png} 
+     \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/improved_doubler_sparring_MQ2007_general.png} 
   \caption{Improved Doubler Versus Sparring with Preference Based Regret with 46 Arms}
 \end{figure}
 \newpage
@@ -813,7 +945,7 @@ The general regret:
 Now lets have a look at the Balanced Doubler algorithm using the same data set.
 \begin{figure}[h!]
   \centering
-     \includegraphics[scale=0.3]{figures/balanced_doubler_sparring_MQ2007_16arms.png} 
+     \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/balanced_doubler_sparring_MQ2007_16arms.png} 
   \caption{Balanced Doubler Versus Sparring with Utility Based Regret with 16 Arms}
 \end{figure}
 
@@ -823,19 +955,19 @@ Now lets have a look at the Balanced Doubler algorithm using the same data set.
 \centering
 \begin{subfigure}{.5\textwidth}
   \centering
-  \includegraphics[scale=0.3]{figures/improved_doubler_TS_sparring_MQ2007_7arms.png}
+  \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/improved_doubler_TS_sparring_MQ2007_7arms.png}
   \caption{7 Arms}
   \label{fig:sub1}
 \end{subfigure}%
 \begin{subfigure}{.5\textwidth}
   \centering
-  \includegraphics[scale=0.3]{figures/improved_doubler_TS_sparring_MQ2007_16arms.png}
+  \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/improved_doubler_TS_sparring_MQ2007_16arms.png}
   \caption{16 Arms}
   \label{fig:sub2}
 \end{subfigure}
 \begin{subfigure}{.5\textwidth}
   \centering
-  \includegraphics[scale=0.3]{figures/improved_doubler_TS_sparring_MQ2007_46arms.png}
+  \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/improved_doubler_TS_sparring_MQ2007_46arms.png}
   \caption{46 Arms}
   \label{fig:sub2}
 \end{subfigure}
@@ -846,7 +978,7 @@ Now lets have a look at the Balanced Doubler algorithm using the same data set.
 The general regret:
 \begin{figure}[h!]
   \centering
-     \includegraphics[scale=0.4]{figures/improved_doubler_TS_sparring_MQ2007_general.png} 
+     \includegraphics[scale=0.4, natwidth=410,natheight=442]{figures/improved_doubler_TS_sparring_MQ2007_general.png} 
   \caption{Improved Doubler Versus Sparring with Preference Based Regret with 46 Arms}
 \end{figure}
 
@@ -855,14 +987,14 @@ And finally, lets show the results of  the sparring algorithm when using Thompso
 
 \begin{figure}[h!]
   \centering
-     \includegraphics[scale=0.4]{figures/TS_sparring_sparring_MQ2007_16arms.png} 
+     \includegraphics[scale=0.4, natwidth=410,natheight=442]{figures/TS_sparring_sparring_MQ2007_16arms.png} 
   \caption{Thompson Sampling Sparring Versus Sparring with Utility Based Regret with 16 Arms}
 \end{figure}
 
 The general regret:
 \begin{figure}[h!]
   \centering
-     \includegraphics[scale=0.4]{figures/TS_sparring_sparring_MQ2007_general.png} 
+     \includegraphics[scale=0.4, natwidth=410,natheight=442]{figures/TS_sparring_sparring_MQ2007_general.png} 
   \caption{Thompson Sampling Sparring Versus Sparring with Preference Based Regret with 46 Arms}
 \end{figure}
 
