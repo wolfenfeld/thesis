@@ -12,7 +12,7 @@ $t\leftarrow 1$\\
 \While{True}{
 	$x_t\leftarrow$ advance($\mathcal{S}_L$),
 	$y_t\leftarrow$ advance($\mathcal{S}_R$)\\
-	play($x_t, y_t$)\\
+	compare($x_t, y_t$)\\
 	observe $b_t$\\
 	feedback($\mathcal{S}_L$, $\mathbbm{1}_{b_t=0}$)\\
 	feedback($\mathcal{S}_R$, $\mathbbm{1}_{b_t=1}$)\\	
