@@ -11,12 +11,8 @@
 \usepackage{caption}
 \usepackage{subcaption}
 \usepackage{graphicx}
-\setcounter{secnumdepth}{3}
 \usepackage{dsfont}
-
 \setcounter{secnumdepth}{5}
-
-
 
 \author{Amit Wolfenfeld\inst{1}}
 \institute{Technion}
@@ -628,13 +624,12 @@ For the convenience of the reader we have included a table of all the definition
 	\newpage
 	
 \subsubsection{Black-Box Algorithms}	
-	In \cite{??}, Ailon et al. tried to tackle the dueling bandits problem (UBDB) using standard bandit algorithms.
+	In \cite{??}, Ailon et al. tried to tackle the dueling bandits problem (UBDB-version) using standard bandit algorithms.
 	In their work, Ailon et al. use MAB algorithm black boxes, defined as Singleton Bandits Machine (SBM) - closed computational units with internal timer and memory.
 	A SBM $S$ supports three operations: reset, advance and feedback. The reset operation simply clears the SBM's state.
-	The advance operation returns the next chosen arm, and the feedback operation returns the utility the arm produced.
+	The advance operation returns the next chosen arm, and feedback is used for simulating a feedback (the utility).
 	\paragraph{Doubler}
 	(Ailon et al., 2014) handles a large or possibly infinite set of arms $X$ for the infinite horizon case.
-	The Doubler algorithm is of the UBDB case, as opposed to the previous algorithm defined for the more general case.
 	The algorithms pseudo-code is presented in Figure~\ref{algo_Doubler}.
 	This algorithm is best explained by thinking of a competition between two players; the first controls the choice of the left arm and the second player controls the right arm. 
 	The objective of each player is to win as many rounds possible.
@@ -648,6 +643,7 @@ For the convenience of the reader we have included a table of all the definition
 		Running the Doubler algorithm with $|X|=K$, with an infinite time horizon, the expected regret is bounded by $R_U(T) = \mathcal{O} \left(H log^2 T \right)$ for all $T>0$, where $H=\sum_{x\in X \backslash x^*}^K \Delta^{-1}_x$ and the regret as in \eqref{eq:utility_regret}, and $\Delta_x$ is the gap between arm $x$ and the optimal arm.
 
 	\end{theorem}
+	As can be seen in line~\ref{line:new_epoch} of Algorithm~\ref{algo_Doubler},  $\mathcal{S}$ is reset every time a new epoch begins, by these removing all the information gained in the previous rounds. This procedure inflicts the extra $Log(T)$ factor to the accumulated regret.
 	
 	\begin{figure}[h]
 	\IncMargin{1em}
@@ -657,13 +653,14 @@ For the convenience of the reader we have included a table of all the definition
 		\KwInput{$X$, $\mathcal{S}$}
 		\BlankLine
 		$p\leftarrow 1$\\
+		$ \mathcal{L} \leftarrow X$\\
 		\While{True}{
 			reset($\mathcal{S}$) \label{line:new_epoch}\\
 			\For{$t = 2^{p-1}$ \KwTo $2^{p}$}{
 				choose $x_t$ uniformly from $\mathcal{L}$\\
 				$y_t \leftarrow advance(\mathcal{S})$\\
 				compare $(x_t , y_t )$, observe choice $b_t$\\
-				feedback $\left(\mathcal{S},b_t\right)$\\
+				feedback $\left(\mathcal{S},b_t\right)$ \label{alg:dblr:feedback}\\
 			}
 			$\mathcal{L} \leftarrow$the multi-set of arms played as y t in the last for-loop.\\
 		$p \rightarrow p+1$
@@ -674,10 +671,8 @@ For the convenience of the reader we have included a table of all the definition
 	\end{figure}
 
 \paragraph{Sparring}
-	(Ailon et al., 2014) works by drawing, in each round, a pair of arms from two SBM black-boxes and comparing them as all the previous algorithms. 
-	Once observing the preference the algorithm updates the preferred (according to the observation) SBM black-box. 
-	The algorithms pseudo-code is presented in Figure~\ref{algo_Sparring}.
-	The idea for the Sparring algorithm comes from analysis of an adversarial version of UDBD, in which it can be easily shown that the resulting expected regret of Sparring is at most a constant times the regret of the two SBM black-boxes which implement an algorithm for adversarial MAB i.e $EXP3$.
+	(Ailon et al., 2014) The algorithms pseudo-code is presented in Figure~\ref{algo_Sparring}.
+	The idea for the Sparring algorithm comes from analysis of an adversarial version of UDBD, in which it can be easily shown that the resulting expected regret of Sparring is at most a constant times the regret of the two SBM black-boxes which implement an algorithm for adversarial MAB (i.e $EXP3$).
 		
 		\begin{figure}[h]
 	\IncMargin{1em}
@@ -709,51 +704,179 @@ that the left (resp. right) SBM black-box does not see a stochastic environment,
 	
 \section{Our Approach}	
 	
-	\subsubsection{Sparring with Thompson Sampling}
-		In our work  we have experimented with both SBMs black and white boxes. The configuration that showed the best result with minimum regret, is the following: 
-		
-		\input{SparringTS.tex}
-		
-	\subsubsection{Improved Doubler}
-	The main drawback of the Doubler algorithm is that in each epoch the SBM is reset and as a result all the acquired data is lost. Therefore adding an extra $log(T)$ factor to the total regret.\\
+	\subsection{Improved Doubler}
+	The main drawback of the Doubler algorithm is that in each epoch the SBM is reset and as a result all the acquired data is lost, thereby adding an extra $log(T)$ factor to the total regret.
+	The algorithms pseudo-code is presented in Figure~\ref{algo_adv_doubler}.
 	Instead of initializing the right arm’s SBM at each epoch and losing all the data, we will store this data.
-Let $D_p$ denote the distribution of the left arm in the $p$’th epoch. 
-By knowing $f_p := E_{x\in D_p} \mu(x)/2$, and by using $b_t + f_p$ as feedback on the right side we could separate $y_t$ from $x_t$ in the feedback.
-\\
-		\input{ImprovedDoubler.tex}
+	Let $D_p$ denote the distribution of the left arm in the $p$’th epoch. 
+	Had we known $f_p := E_{x\in D_p} \mu(x)/2$, we could have used $b_t + f_p$ as feedback on the right side.
+	This would have offset the change in the expected utility of the left arm, from epoch to epoch.
+	As a result, we would not have ad to reset the SBM at each epoch.
+	By changing line~\ref{alg:dblr:feedback} in the Doubler algorithm to feedback($\mathcal{S}, b_t + f_p $).
+	It is easy to see that $E(b_t + f_p )$ is exactly $E(\frac{u(y_t)+1}{2})$, meaning we have decoupled the arms' utilities.
+	Of course we do not know $f_p$, and can only estimate it.
+	Luckily, an unbiased estimate of $f_p$, $\hat{f}_p$ can be obtained using a simple inductive formula.
+	First we notice $f_p$ is defined by 
+	\begin{equation}
+	f_{p+1} = \frac{1}{|T_p|}\sum\limits_{t\in T_p} \mu(y_t)/2
+	\end{equation}
+	and so:
+	$$
+	f_{p+1} = 
+		\frac{1}{|T_p|}\sum\limits_{t\in T_p} E[b_t - \frac{1-\mu(x_t)}{2}] = \frac{1}{|T_p|}\sum\limits_{t\in T_p} E[b_t - f_{p-1}-\frac{1}{2}]
+	$$
+	The estimate for $f_p$ is given by a recursive formula:
+	\begin{equation}
+	\hat{f}_p=\hat{f}_{p-1} + \frac{\sum\limits_{t\in T_p} (2b_t -1)}{|T_{p-1}|}
+	\end{equation}
+	We wish to bound $\hat{f}_p$:
+	
+	$$\hat{f}_{p+1}=\hat{f}_{p} + 
+		\frac{\sum\limits_{t\in T_p} (2b_t -1)}{|T_{p}|} = 
+		\hat{f}_{p} + 
+		\frac{\sum\limits_{t\in T_p} (2b_t -1)}{2^{p}} = 
+		\hat{f}_{p} + 
+		\frac{\sum\limits_{t\in T_i} 2b_t}{2^{p}}-1 =$$
+		$$
+		\hat{f}_{p} + B_p -1 =  
+		\hat{f}_{p-1} +B_{p-1} -1+ B_p -1 = ... =  
+		\hat{f}_{0} + \sum\limits_{j=1}^p B_{j}+p$$
+	
+	$\sum\limits_{j=1}^p B_{j}$  equals $E[b]$ which is bounded by $[0,1]$ and $p$ which is $log(T)$. And so we can bound $\hat{f}$ by $\log(T)$.
+	This is a very rough bound of $\hat{f}_p$, with it we cannot prove that the total regret achieve a better bound then $\mathcal{O}(log^2(T))$.
+	In our experiments we have witnessed that $\hat{f}_p$ is far smaller then the rough bound and is bounded by $\mathcal{O}(1)$, that proves that the total regret is bound by $\mathcal{O}(log(T))$.
+	We have yet to prove this and leave this for further research.
+	
+\begin{figure}[h]
+	\IncMargin{1em}
+		\begin{algorithm}[H]
+		\SetKwInput{KwInput}{Input}
+		\KwInput{$X, \hat{f_0} = 0$, $\mathcal{S}$}
+		\BlankLine
+		$\mathcal{L} \leftarrow X$\\
+		$p\leftarrow 1$\\
+\While{True}{
+	\For{$t = 2^{p-1}$ \KwTo $2^{p}$}{\label{forins}
+		choose $x_t$ uniformly from $\mathcal{L}$\\
+		$y_t \leftarrow advance(\mathcal{S})$\\
+		play $(x_t , y_t )$, observe choice $b_t$\\
+		feedback $\left(\mathcal{S},b_t + \hat{f}_{p-1}\right)$\\
+	}
+	$\mathcal{L} \leftarrow$the multi-set of arms played as y t in the last for-loop.\\
+	$\hat{f_{p}} \leftarrow \hat{f}_{p} + \sum_{s\in T_p} b_s /2^{p-1} - 1/2$\\
+	$p \rightarrow p+1$
+}
+			\caption{Improved Doubler}
+		\end{algorithm}
+		\caption{Improved Doubler Algorithm}\label{algo_adv_doubler}
+	\end{figure}		
+	
 		
-		$f_p$ is defined by $f_{p+1} = 
-		\frac{1}{|T_p|}\sum\limits_{t\in T_p} \mu(y_t)/2$\\
-		and so: $f_{p+1} = 
-		\frac{1}{|T_p|}\sum\limits_{t\in T_p} E[b_t - \frac{1-\mu(x_t)}{2}] = \frac{1}{|T_p|}\sum\limits_{t\in T_p} E[b_t - f_{p-1}-\frac{1}{2}]$ \\
-		We need to estimate $f_p$ with $\hat{f}_p$ and so we get
 
-        $$\hat{f}_i=\hat{f}_{i-1} + \frac{\sum\limits_{t\in T_i} (2b_t -1)}{|T_{i-1}|}$$
-		\\		
-		Let's break it down a bit:\\
-		$\hat{f}_{i+1}=\hat{f}_{i} + 
-		\frac{\sum\limits_{t\in T_i} (2b_t -1)}{|T_{i}|} = 
-		\hat{f}_{i} + 
-		\frac{\sum\limits_{t\in T_i} (2b_t -1)}{2^{i}} = 
-		\hat{f}_{i} + 
-		\frac{\sum\limits_{t\in T_i} 2b_t}{2^{i}}-1 = 
-		\hat{f}_{i} + B_i -1 =  
-		\hat{f}_{i-1} +B_{i-1} -1+ B_i -1 = ... =  
-		\hat{f}_{0} + \sum\limits_{j=1}^i B_{j}+i$
-		\\
-		From her we can bound $\hat{f}_{i}$.
-		First lets look at $\sum\limits_{j=1}^i B_{j}$, this equals $E[b]$ which is bounded by $[0,1]$ and $i$ which is $log(T)$. And so we can bound $\hat{f}$ by $\log(T)$.
+	\subsection{Sparring with Thompson Sampling}
+		In our work  we have experimented with both SBMs black and white boxes. The configuration that showed the best result with minimum regret (the results will be presented in the next chapter). 
+		The algorithms pseudo-code is presented in Figure~\ref{algo_SparringTS}.
+		The algorithm maintains the number of times each arm won and failed a comparison.
+		In each round a simulation is conducted for each of the arms.
+		The simulation is according to the random variables $\Theta_{x,R}, \Theta_{x,L}$ (for each arm $x \in X$) with beta distribution. 
+		The beta distribution is defined by the hyper-parameters $Success_{L,x}$, $Fails_{L,x}$ for the left set of random variable set and $Success_{R,x}, Fails_{R,x}$ for the right set(lines~\ref{alg:sts:Theta_L}, \ref{alg:sts:Theta_R}).
+		After the arms are compared and the outcome is observed all the relevant hyper-parameters are updated with the results.
+		
+	\begin{figure}[h]
+	\IncMargin{1em}
+		\begin{algorithm}[H]
+		\SetKwInput{KwInput}{Input}
+		
+		\KwInput{$X$, $\mathcal{S}_R, \mathcal{S}_L$}
+		\BlankLine
+		$t\leftarrow 1$\\
+\While{True}{
+	$\forall x \in X \Theta_{L,x} \sim Beta(Success_{L,x}+1, Fails_{L,x}+1)$ \label{alg:sts:Theta_L}\\
+	$\forall x \in X \Theta_{R,x} \sim Beta(Success_{R,x}+1, Fails_{R,x}+1)$ \label{alg:sts:Theta_R}\\
+	$x_t\leftarrow argmax_{x\in X}(\Theta_{L,x})$\\
+	$y_t\leftarrow argmax_{x\in X}(\Theta_{R,x})$\\
+	compare($x_t, y_t$)\\
+	observe $b_t$\\
+	$Success_{L,x_t} \leftarrow Success_{L,x_t} + \mathbbm{1}_{b_t=0}$\\
+	$Fails_{L,x_t} \leftarrow Fails_{L,x_t} + \mathbbm{1}_{b_t=1}$\\
+	$Success_{R,y_t} \leftarrow Success_{R,y_t} + \mathbbm{1}_{b_t=1}$\\
+	$Fails_{R,y_t} \leftarrow Fails_{R,y_t} + \mathbbm{1}_{b_t=0}$\\	
+	$t\rightarrow t+1$\\
+}
+			\caption{Sparring Thompson Sampling}
+		\end{algorithm}
+		\caption{Sparring Thompson Sampling Algorithm}\label{algo_SparringTS}
+	\end{figure}
+					
+	\subsection{Unforgetful Thompson Sampling Doubler}
+		Another improvement of the Doubler algorithm is the Unforgetful Thompson Sampling Doubler algorithm - here we do not reset the SBM in each epoch and use the Thompson Sampling method. This approach outperformed all the other algorithms apart from the Thompson Sampling Sparring.
+		The algorithms pseudo-code is presented in Figure~\ref{algo_uts_doubler}.
 
-				
-	\subsubsection{Unforgetful Thompson Sampling Doubler}
-		Another improvement of the Doubler algorithm is the Unforgetful Thompson Sampling Doubler algorithm - here we do not reset the SBM in each epoch and use the Thompson Sampling method. This approach outperformed all the other algorithms apart from the Thompson Sampling Sparring approach mentioned in section 3.
-
-		\input{ImprovedDoublerTS.tex}
+		\begin{figure}[h]
+	\IncMargin{1em}
+		\begin{algorithm}[H]
+		\SetKwInput{KwInput}{Input}
+		\KwInput{$X$, $\mathcal{S}$}
+		\BlankLine
+		$\mathcal{L} \leftarrow X$\\
+		$p\leftarrow 1$\\
+		\While{True}{
+			\For{$t = 2^{p-1}$ \KwTo $2^{p}$}{
+				choose $x_t$ uniformly from $\mathcal{L}$\\
+				$\forall x \in X \Theta_{R,i} \sim Beta(Success_{R,x}+1, Fails_{R,x}+1)$\\
+				$y_t\leftarrow argmax_{x \in X}(\Theta_{R,x})$)\\
+				compare $(x_t , y_t )$\\
+				observe choice $b_t$\\
+				$Success_{R,y_t} \leftarrow Success_{R,y_t} + \mathbbm{1}_{b_t=1}$\\
+				$Fails_{R,y_t} \leftarrow Fails_{R,y_t} + \mathbbm{1}_{b_t=0}$\\	
+			}
+			$\mathcal{L} \leftarrow$the multi-set of arms played as $y_t$ in the last for-loop.\\
+			$p \rightarrow p+1$
+}
+			\caption{Unforgetful Thompson Sampling Doubler}
+		\end{algorithm}
+		\caption{Unforgetful Thompson Sampling Doubler}\label{algo_uts_doubler}
+	\end{figure}
 		
 		\newpage	
-	\subsubsection{Balanced Doubler}
-		Another improvement of the Doubler algorithm is the Balanced Doubler algorithm.In this algorithm we assume we know $\Delta$ ($\Delta = \mu(x_1) - \mu(x_2)$ were $x_1$ is the arm with the highest estimated reward and $x_2$ is the arm with the second highest estimated reward.
-		\input{BalancedDoubler.tex}\\
+	\subsection{Balanced Doubler}
+		Another improvement of the Doubler algorithm is the Balanced Doubler algorithm.In this algorithm we assume we know $min_{x\in X \backslash x^*}(\Delta_x)$
+		
+		\begin{figure}[h]
+	\IncMargin{1em}
+		\begin{algorithm}[H]
+		\SetKwInput{KwInput}{Input}
+		\KwInput{$X$, $\mathcal{S}$}
+		\BlankLine
+		$\mathcal{L} \leftarrow X$\\
+		$p\leftarrow 1$\\
+		\While{True}{
+		Play each arm $\frac{k}{min_{x\in X \backslash x^*}(\Delta_x)}$ times against all other arms\\
+		\For{$t = 2^{p-1}$ \KwTo $2^{p}$}{
+		choose $x_t$ uniformly from $\mathcal{L}$\\
+		$y_t \leftarrow argmax_i
+			\left(
+				\frac{1}{p}\sum\limits_{j=1}^{p}\frac{1}{n_{i,j}}
+						   \sum\limits_{t\in T_{i,j}} b_t
+				+
+				\sqrt{
+					\alpha\cdot\log(t)
+					\cdot(
+						\sum\limits_{j=1}^{p}\frac{1}{n_{i,j}}
+						)/p^2
+					}
+			\right)$\\
+		compare $(x_t , y_t)$\\
+		observe choice $b_t$\\
+		}
+	$\mathcal{L} \leftarrow$the multi-set of arms played as $y_t$ in the last for-loop.\\
+	$p \rightarrow p+1$
+}
+			\caption{Balanced Doubler}
+		\end{algorithm}
+		\caption{Balanced Doubler}\label{algo_balanced_doubler}
+	\end{figure}
+		
 		Proof of $log(T)$ regret:
 		\\
 		Lets define : $Y_i(t) = \frac{1}{p}\sum\limits_{j=1}^{p}\frac{1}{n_{i,j}}
