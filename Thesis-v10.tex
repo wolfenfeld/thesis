@@ -532,12 +532,12 @@ For the convenience of the reader we have included a table of all the definition
 	After both arms are selected and compared, the algorithm updates $w_{x,y}$ for all the arms and continues to the next round. 
 	Although no theoretical guarantees where presented in [?], according to the experiments there, RCS outperforms the RUCB algorithm for a small number of arms (less than 40).	
 	In Figure~\ref{alg:RCS:exp} we can see the results of the experiments Munos et al. performed on the MSLR-WEB30K dataset.
-	To evaluate the RCS algorithm, Munos et al. applied it to the problem of ranker evaluation from the field of information retrieval (IR) (Manning et al., 2008). 
+	To evaluate the RCS algorithm, Munos et al. applied it to the problem of scorer (which inferred as ranker in the original paper) evaluation from the field of information retrieval (IR). 
 	A ranker is a function that takes a user's search query and ranks the documents in a collection according to their relevance to that query. 
 	Ranker evaluation aims to determine which set of rankers performs best.
-	An effective way to achieve this is to use interleaved comparisons (Radlinski et al., 2008), which interleave the documents proposed by two different rankers and presents the resulting list to the user, whose resulting click feedback is used to infer a stochastic preference for one of the rankers. 
 	Given a set of K rankers, the problem of finding the best ranker can then be modelled  as a K-armed Dueling Bandit problem, with each arm relating to a ranker.
 	These experiments are built on real IR data from the MSLR-WEB30K dataset.
+	We will go into more details on the experiments in chapter 5.
 	Using this data set, 20,30 and 40 rankers, each relating to a ranking feature provided in the data set, e.g., PageRank. 
 	The ranker evaluation task then corresponds to conclude which single feature is the best ranker (Hofmann et al., 2013).
 	
@@ -958,43 +958,63 @@ that the left (resp. right) SBM black-box does not see a stochastic environment,
 		\\
 		with some reverse engineering and in order to get $Pr[X_j > a] < \frac{1}{t}$ we get that $a = \sqrt{\frac{\log(t) \sum\limits_{j=1}^{p} \frac{1}{n_{i,j}}}{p^2}}$ 
  
- 
+\newpage
 	
 		
 \section{Experiments}
 
 To evaluate our algorithms, we apply them to the problem of
-ranker evaluation from the field of information retrieval
-(IR) (Manning et al., 2008). A ranker is a
+scorer evaluation from the field of information retrieval
+(IR) (Manning et al., 2008). A scorer is a
 function that takes a user's search query and
 ranks the documents in a collection according to their
-relevance to that query. Ranker evaluation aims to determine
-which set of rankers performs best.
+relevance to that query. Scorer evaluation aims to determine
+which set of scorers performs best.
 \\
 An effective way to achieve this is to use interleaved
-comparisons (Radlinski et al., 2008), which interleave
-the documents proposed by two different rankers and
-presents the resulting list to the user, whose resulting
-click feedback is used to infer a stochastic preference
-for one of the rankers. Given a set of K rankers, the
-problem of finding the best ranker can then be modelled 
-as a K-armed Dueling Bandit problem, with each
-arm relating to a ranker.
+comparisons (Radlinski et al., 2008),  
 \\
+Interleaved comparison methods, which compare scorers
+using naturally occurring user interactions such as clicks. 
+Compared to evaluations based on manual judgements from expert annotators.
+Since this data is based on the behaviour of real users, it more
+accurately reflects how well their information needs are met. 
+Comparing two scorers requires presenting users with
+interleaved result lists based on those scorers and observing how
+they interact with them. 
+Given a set of K scorers, the
+problem of finding the best ranker can then be modelled as a K-armed Dueling Bandit problem, with each arm relating to a scorer.
 Our setup is built on real IR data,
 namely the LETOR MQ2007 dataset (Liu et al., 2007).
-Using this data set, we create a set of 46 rankers, each
+Using this data set, we create a set of 46 scorers, each
 relating to a ranking feature provided in the
-data set, e.g., PageRank. The ranker evaluation task
+data set, e.g., PageRank. The scorer evaluation task
 then corresponds to conclude which single feature
-is the best ranker (Hofmann et al., 2013).
-\\
-We evaluated our algorithms and RCS
-using randomly chosen subsets from the pool of 46
-rankers, yielding K-armed dueling bandit problems
-with $K\in \{7, 16, 46\}$. 
-\\
+is the best scorer (Hofmann et al., 2013).
+To compare a pair of arms, we use the interleaved comparison
+method could be used instead. 
+To model the user’s click behaviour on the resulting interleaved lists, we employ a probabilistic user model that uses as input the manual labels (classifying documents as relevant or not for given queries) provided with both datasets. 
+Queries are sampled randomly and clicks are generated probabilistically by conditioning on these assessments using a user model that resembles the behaviour of an actual user. 
+This approach follows an experimental paradigm that has previously been
+used for assessing the performance of rankers [???].
 We will present the utility based regret and the general regret (as define in section 2.1 and 2.2) on the MQ2007. 
+\\
+We will conduct the following experiments:
+\begin{enumerate}
+
+\item 7 arms - UBDB
+\item 16 arms - UBDB
+\item 46 arms - UBDB
+\item 7 arms - PBDB
+\item 16 arms - PBDB
+\item 46 arms - PBDB
+\item close arms
+\item one strong arm
+\item no Condorcet winner
+\item Cyclic P matrix
+
+\end{enumerate}
+
 \newpage
 
 \subsection{Results}
