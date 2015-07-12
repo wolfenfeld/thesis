@@ -276,6 +276,7 @@ In this paper we propose several new methods for the Dueling Bandit Problem. Our
 	\Delta_{x^*,y} = p_{x^*,y} - \frac{1}{2} = \frac{\mu(x^*)-\mu(y)}{2}
 	$$
 	And so the total regret is defined:
+	\
 	$$ R_P(T) = \sum_{t=1}^T \frac{\Delta_{x^*,x_t}+\Delta_{x^*,y_t}}{2} =  
 \sum_{t=1}^T \frac{\frac{\mu(x^*)-\mu(x_t)}{2}+\frac{\mu(x^*)-\mu(y_t)}{2}}{2} =
 $$
@@ -695,7 +696,6 @@ For the convenience of the reader we have included a table of all the definition
 		\caption{Sparring Algorithm}\label{algo_Sparring}
 	\end{figure}	
 	
-		\input{Sparring.tex}
 	\begin{conjecture}
  		In the paper Ailon et al., 2014 conjectured that the utility based regret of the Sparring algorithm is bounded by the combined regret of the SBM black-boxes, with a possibility of a small overhead.
  	\end{conjecture}	
@@ -703,27 +703,28 @@ For the convenience of the reader we have included a table of all the definition
 that the left (resp. right) SBM black-box does not see a stochastic environment, because its feedback depends on non-stochastic actions of the two SBM black-boxes. 
 	
 \section{Our Approach}	
+	We start with two algorithms that try to fix a major shortcoming of the Doubler algorithm. In every epoch, the Doubler algorithm resets the SBM black-box, meaning that it will need to re-learn the environment and thus incurring an extra $\log(T)$ factor on the cumulative regret.
+	We present two algorithms, Improved Doubler and Balanced Doubler, that tackle this shortcoming.
 	
 	\subsection{Improved Doubler}
-	The main drawback of the Doubler algorithm is that in each epoch the SBM is reset and as a result all the acquired data is lost, thereby adding an extra $log(T)$ factor to the total regret.
-	The algorithms pseudo-code is presented in Figure~\ref{algo_adv_doubler}.
-	Instead of initializing the right arm’s SBM at each epoch and losing all the data, we will store this data.
+	The Improved Doubler algorithm's pseudo-code is presented in Figure~\ref{algo_adv_doubler}.
+	Instead of initializing the right arm’s SBM at each epoch and losing all the data, we will store an invariant of this data.
 	Let $D_p$ denote the distribution of the left arm in the $p$’th epoch. 
 	Had we known $f_p := E_{x\in D_p} \mu(x)/2$, we could have used $b_t + f_p$ as feedback on the right side.
 	This would have offset the change in the expected utility of the left arm, from epoch to epoch.
-	As a result, we would not have ad to reset the SBM at each epoch.
-	By changing line~\ref{alg:dblr:feedback} in the Doubler algorithm to feedback($\mathcal{S}, b_t + f_p $).
+	As a result, we would not have had to reset the SBM at each epoch.
+	We fix this by changing line~\ref{alg:dblr:feedback} in the Doubler algorithm to feedback($\mathcal{S}, b_t + f_p $).
 	It is easy to see that $E(b_t + f_p )$ is exactly $E(\frac{u(y_t)+1}{2})$, meaning we have decoupled the arms' utilities.
 	Of course we do not know $f_p$, and can only estimate it.
 	Luckily, an unbiased estimate of $f_p$, $\hat{f}_p$ can be obtained using a simple inductive formula.
-	First we notice $f_p$ is defined by 
+	First we notice $E[f_p]$ is defined by 
 	\begin{equation}
-	f_{p+1} = \frac{1}{|T_p|}\sum\limits_{t\in T_p} \mu(y_t)/2
+	E[f_{p+1}] = \frac{1}{|T_p|}\sum\limits_{t\in T_p} \mu(y_t)/2
 	\end{equation}
 	and so:
 	$$
-	f_{p+1} = 
-		\frac{1}{|T_p|}\sum\limits_{t\in T_p} E[b_t - \frac{1-\mu(x_t)}{2}] = \frac{1}{|T_p|}\sum\limits_{t\in T_p} E[b_t - f_{p-1}-\frac{1}{2}]
+	E[f_{p+1} ]= 
+		\frac{1}{|T_p|}\sum\limits_{t\in T_p} E[b_t - \frac{1-\mu(x_t)}{2}] = \frac{1}{|T_p|}\sum\limits_{t\in T_p} E[b_t + f_{p-1}-\frac{1}{2}] = E[f_{p-1} ]+E[b_t -\frac{1}{2}]
 	$$
 	The estimate for $f_p$ is given by a recursive formula:
 	\begin{equation}
@@ -742,9 +743,10 @@ that the left (resp. right) SBM black-box does not see a stochastic environment,
 		\hat{f}_{p-1} +B_{p-1} -1+ B_p -1 = ... =  
 		\hat{f}_{0} + \sum\limits_{j=1}^p B_{j}+p$$
 	
-	$\sum\limits_{j=1}^p B_{j}$  equals $E[b]$ which is bounded by $[0,1]$ and $p$ which is $log(T)$. And so we can bound $\hat{f}$ by $\log(T)$.
-	This is a very rough bound of $\hat{f}_p$, with it we cannot prove that the total regret achieve a better bound then $\mathcal{O}(log^2(T))$.
-	In our experiments we have witnessed that $\hat{f}_p$ is far smaller then the rough bound and is bounded by $\mathcal{O}(1)$, that proves that the total regret is bound by $\mathcal{O}(log(T))$.
+	Were $ B_{p} = \frac{\sum\limits_{t\in T_p} 2b_t}{2^{p}}$ is the average of $b_t$ in epoch $p$, which is bound by one, and so 
+	$\sum\limits_{j=1}^p B_{j}$ is bound by $p$. And so we can bound $\hat{f}$ by $\log(T)$.
+	This is a very rough bound of $\hat{f}_p$, with it we cannot prove that the total regret achieve a better bound then $\mathcal{O}(\log^2(T))$.
+	In our experiments we have witnessed that $\hat{f}_p$ is far smaller then the rough bound. A high probability bound of $\mathcal{O}(1)$ would prove that the total regret is bound by $\mathcal{O}(\log(T))$.
 	We have yet to prove this and leave this for further research.
 	
 \begin{figure}[h]
@@ -770,77 +772,100 @@ that the left (resp. right) SBM black-box does not see a stochastic environment,
 		\end{algorithm}
 		\caption{Improved Doubler Algorithm}\label{algo_adv_doubler}
 	\end{figure}		
-	
 		
-
-	\subsection{Sparring with Thompson Sampling}
-		In our work  we have experimented with both SBMs black and white boxes. The configuration that showed the best result with minimum regret (the results will be presented in the next chapter). 
-		The algorithms pseudo-code is presented in Figure~\ref{algo_SparringTS}.
-		The algorithm maintains the number of times each arm won and failed a comparison.
-		In each round a simulation is conducted for each of the arms.
-		The simulation is according to the random variables $\Theta_{x,R}, \Theta_{x,L}$ (for each arm $x \in X$) with beta distribution. 
-		The beta distribution is defined by the hyper-parameters $Success_{L,x}$, $Fails_{L,x}$ for the left set of random variable set and $Success_{R,x}, Fails_{R,x}$ for the right set(lines~\ref{alg:sts:Theta_L}, \ref{alg:sts:Theta_R}).
-		After the arms are compared and the outcome is observed all the relevant hyper-parameters are updated with the results.
-		
-	\begin{figure}[h]
-	\IncMargin{1em}
-		\begin{algorithm}[H]
-		\SetKwInput{KwInput}{Input}
-		
-		\KwInput{$X$, $\mathcal{S}_R, \mathcal{S}_L$}
-		\BlankLine
-		$t\leftarrow 1$\\
-\While{True}{
-	$\forall x \in X \Theta_{L,x} \sim Beta(Success_{L,x}+1, Fails_{L,x}+1)$ \label{alg:sts:Theta_L}\\
-	$\forall x \in X \Theta_{R,x} \sim Beta(Success_{R,x}+1, Fails_{R,x}+1)$ \label{alg:sts:Theta_R}\\
-	$x_t\leftarrow argmax_{x\in X}(\Theta_{L,x})$\\
-	$y_t\leftarrow argmax_{x\in X}(\Theta_{R,x})$\\
-	compare($x_t, y_t$)\\
-	observe $b_t$\\
-	$Success_{L,x_t} \leftarrow Success_{L,x_t} + \mathbbm{1}_{b_t=0}$\\
-	$Fails_{L,x_t} \leftarrow Fails_{L,x_t} + \mathbbm{1}_{b_t=1}$\\
-	$Success_{R,y_t} \leftarrow Success_{R,y_t} + \mathbbm{1}_{b_t=1}$\\
-	$Fails_{R,y_t} \leftarrow Fails_{R,y_t} + \mathbbm{1}_{b_t=0}$\\	
-	$t\rightarrow t+1$\\
-}
-			\caption{Sparring Thompson Sampling}
-		\end{algorithm}
-		\caption{Sparring Thompson Sampling Algorithm}\label{algo_SparringTS}
-	\end{figure}
-					
-	\subsection{Unforgetful Thompson Sampling Doubler}
-		Another improvement of the Doubler algorithm is the Unforgetful Thompson Sampling Doubler algorithm - here we do not reset the SBM in each epoch and use the Thompson Sampling method. This approach outperformed all the other algorithms apart from the Thompson Sampling Sparring.
-		The algorithms pseudo-code is presented in Figure~\ref{algo_uts_doubler}.
-
-		\begin{figure}[h]
-	\IncMargin{1em}
-		\begin{algorithm}[H]
-		\SetKwInput{KwInput}{Input}
-		\KwInput{$X$, $\mathcal{S}$}
-		\BlankLine
-		$\mathcal{L} \leftarrow X$\\
-		$p\leftarrow 1$\\
-		\While{True}{
-			\For{$t = 2^{p-1}$ \KwTo $2^{p}$}{
-				choose $x_t$ uniformly from $\mathcal{L}$\\
-				$\forall x \in X \Theta_{R,i} \sim Beta(Success_{R,x}+1, Fails_{R,x}+1)$\\
-				$y_t\leftarrow argmax_{x \in X}(\Theta_{R,x})$)\\
-				compare $(x_t , y_t )$\\
-				observe choice $b_t$\\
-				$Success_{R,y_t} \leftarrow Success_{R,y_t} + \mathbbm{1}_{b_t=1}$\\
-				$Fails_{R,y_t} \leftarrow Fails_{R,y_t} + \mathbbm{1}_{b_t=0}$\\	
-			}
-			$\mathcal{L} \leftarrow$the multi-set of arms played as $y_t$ in the last for-loop.\\
-			$p \rightarrow p+1$
-}
-			\caption{Unforgetful Thompson Sampling Doubler}
-		\end{algorithm}
-		\caption{Unforgetful Thompson Sampling Doubler}\label{algo_uts_doubler}
-	\end{figure}
-		
-		\newpage	
 	\subsection{Balanced Doubler}
-		Another improvement of the Doubler algorithm is the Balanced Doubler algorithm.In this algorithm we assume we know $min_{x\in X \backslash x^*}(\Delta_x)$
+		Another improvement of the Doubler algorithm is the Balanced Doubler algorithm.In this algorithm we assume we know $min_{x\in X \backslash x^*}(\Delta_x)$.
+		Instead of resetting the SBM on each epoch as in the Doubler algorithm, we will use an estimator as defined in the Balanced Doubler.
+In order to cancel the offset in the estimator we will use average of averages:
+\begin{equation}
+\tilde{\mu}(y) = E\left[ \frac{1}{P}\sum\limits_{p=1}^P \frac{1}{n_{y,p}} \sum\limits_{t\in T_{y,p}} b_t\right]
+\end{equation}
+Where $n_{y,p}$ is the number of times arm $y$ was chosen in epoch $p$.
+We will prove that this estimate is an unbiased estimate of $\mu(y)$ upto a constant that is invariant of $y$:
+\begin{equation*}
+E\left[ \frac{1}{P}\sum\limits_{p=1}^P \frac{1}{n_{y,p}} \sum\limits_{t\in T} \frac{\mu(y)-\mu(x_t)+1}{2}\right]= \mu(y) +\frac{1}{2} +E\left[ \frac{1}{P}\sum\limits_{p=1}^P \frac{1}{n_{y,p}} \sum\limits_{t\in T_{y,p}} \frac{\mu(x_t)}{2}\right]
+\end{equation*}
+In short: 
+\begin{equation}
+\tilde{\mu}(y)  = \mu(y) + C(P) 
+\end{equation}
+We will now show that in order to achieve $\mathcal{O}(\log T)$ regret bound we need a warm up phase.
+We define $s$ to be the number of times each arm is played in the warm-up phase .
+	Due to the fact that $\Delta_{x} \in [0,1]$ the total regret can be bound by:
+	\begin{equation*}
+	R=R_{warm-up}+R_{rest} \leq s \cdot p K + 
+	\sum_{t=1}^{\infty}Pr\left(\tilde{\mu}(x_t)>\tilde{\mu}(x^*)\;|\;{x_t\in X \backslash x^*} \right)
+	\end{equation*}
+	
+	We wish to bound $Pr(\tilde{\mu}(x)>\tilde{\mu}(x^*))$. 
+	
+	In the worst case scenario (standard deviation-wise) $n_{x,p} \equiv s$, meaning that arm $x$ was chosen in each epoch only $s$ times, $s\cdot p$ in total.
+	The probability of choosing the wrong arm can be bound by:
+	\begin{equation}\label{regret_bound}
+	Pr(\tilde{\mu}(x)>\tilde{\mu}(x^*)) < 
+	Pr(\tilde{\mu}(x) > \mu(x) + \frac{\Delta_x}{2})+ 
+	Pr(\tilde{\mu}(x^*)< \mu(x^*) - \frac{\Delta_x}{2})
+	\end{equation}
+	
+	Meaning that at epoch $p$ suboptimal arm $x$ was played $s\cdot P$ times and so we can bound the probability of that arm being played again by:
+	\begin{equation}
+	Pr(\tilde{\mu}(x) > \mu(x) + \frac{\Delta_x}{2})+ 
+	Pr(\tilde{\mu}(x^*)< \mu(x^*) - \frac{\Delta_x}{2}) \leq \sum\limits_{p=1}^P 2 e^{-\frac{\Delta^2_x}{2}s\cdot p}
+	\end{equation}
+	And the regret incurred by arm $x$ can be bound by:
+	\begin{equation}
+	R_x < s\cdot P\Delta_x+2\Delta_x\sum\limits_{p=1}^P \left( 2^p e^{-\frac{\Delta^2_x}{2}s\cdot p} \right) = s\cdot P\Delta_x+2\Delta_x\sum\limits_{p=1}^P \left( 2 e^{-\frac{\Delta^2_x}{2}s} \right)^p
+	\end{equation}
+	Buy using the sum of geometric series we can bound the regret by:
+	\begin{equation}
+	R_x < s\cdot P\Delta_x+2\Delta_x \frac{2 e^{-\frac{\Delta^2_x}{2}s} - (2 e^{-\frac{\Delta^2_x}{2}s})^P}{1-2 e^{-\frac{\Delta^2_x}{2}s}}
+	\end{equation}
+	We wish to find $s$ that will yield the minimum regret.
+	We will split the calculation of $s$ :	
+	$$s < \frac{2\log(2)}{\Delta^2_x}$$
+	Assuming the above, we get:
+	
+	\begin{equation}
+		R_x < s\cdot P\Delta_x+2\Delta_x \frac{2 e^{-\frac{\Delta^2_x}{2}s} - (2 e^{-\frac{\Delta^2_x}{2}s})^P}{1-2 e^{-\frac{\Delta^2_x}{2}s}} \sim s\cdot P\Delta_x - (2 e^{-\frac{\Delta^2_x}{2}s})^P
+	\end{equation}	
+	We will drive and get
+	\begin{align*}
+	& P\Delta_x + \Delta_x\frac{P\Delta^2_x}{2}(2 e^{-\frac{\Delta^2_x}{2}s})^P = 0
+	\\
+	& 1 +\frac{\Delta^2_x}{2}(2 e^{-\frac{\Delta^2_x}{2}s})^P = 0
+	\\
+	& -\frac{2}{\Delta^2_x} = 2^P e^{-\frac{P\Delta^2_x}{2}s}
+	\\
+	& \log(\frac{\Delta^2_x}{2}) = -\frac{P\Delta^2_x}{2}s + P\log(2)
+	\\
+	& \log(\frac{\Delta^2_x}{2}) - P\log(2) = -\frac{P\Delta^2_x}{2}s
+	\\
+	& \frac{P\Delta^2_x}{2}s = P\log(2) - \log(\frac{\Delta^2_x}{2})
+	\\
+	& s = \frac{2\log(2)}{\Delta^2_x} - \frac{\log(\frac{\Delta^2_x}{2})}{P\Delta^2_x}
+	\end{align*}
+	Were $P\rightarrow \infty$ we get that$s = \frac{2\log(2)}{\Delta^2_x}$
+	
+	
+	In the second case:
+	$$s > \frac{2\log(2)}{\Delta^2_x}$$	
+	Assuming the above we get:
+	\begin{equation}
+		R_x < s\cdot P\Delta_x+2\Delta_x \frac{2 e^{-\frac{\Delta^2_x}{2}s} - (2 e^{-\frac{\Delta^2_x}{2}s})^P}{1-2 e^{-\frac{\Delta^2_x}{2}s}} \sim s\cdot P\Delta_x + 2\Delta_x \frac{2 e^{-\frac{\Delta^2_x}{2}s} }{1-2 e^{-\frac{\Delta^2_x}{2}s}}
+	\end{equation}
+	And from here we can see that the minimum of this function (assuming $s > \frac{2\log(2)}{\Delta^2_x}$) is $\frac{2\log(2)}{\Delta^2_x}$.
+
+	Now that we have the number of rounds each arm is played in the warms start phase we calculate the regret.
+	For a single arm $x$:
+	\begin{equation}
+	R_x < \log(4)P\frac{1}{\Delta_x} +2\Delta_x\sum\limits_{p=1}^P \left( 2 e^{-\frac{\Delta^2_x}{2}\frac{2\log(2)}{\Delta^2_x}} \right)^p = P(\frac{\log(4)}{\Delta_x}+2\Delta_x)
+	\end{equation}
+	And for all the arms we get:
+	\begin{equation}
+	R(P) = P \sum\limits_{x\in X\backslash x^*} (\frac{\log(4)}{\Delta_x}+2\Delta_x)
+	\end{equation}
+	 
+	 And where $P$ is of $\mathcal{O}(\log(T))$ we get the the regret is of $\mathcal{O}(\log(T))$.
 		
 		\begin{figure}[h]
 	\IncMargin{1em}
@@ -877,329 +902,767 @@ that the left (resp. right) SBM black-box does not see a stochastic environment,
 		\caption{Balanced Doubler}\label{algo_balanced_doubler}
 	\end{figure}
 		
-		Proof of $log(T)$ regret:
-		\\
-		Lets define : $Y_i(t) = \frac{1}{p}\sum\limits_{j=1}^{p}\frac{1}{n_{i,j}}
-						   \sum\limits_{t\in T_{i,j}} b_t$		
-		\\
-		Where $n_{i,j}$ is the number of time arm $i$ is played in epoch $j$.\\
-		$X_i = Y_i (b_t = b_t- f_j) =   \frac{1}{p}\sum\limits_{j=1}^{p}\frac{1}{n_{i,j}}
-						   \sum\limits_{t\in T_{i,j}} b_t-f_j$	
-		\\
-		Now let's look at $\mathbbm{E}(e^{\lambda X_i})$
-		\\	
-		$\mathbbm{E}(e^{\lambda X_i}) = \mathbbm{E}(e^{\lambda\cdot(
-		\frac{1}{p}\sum\limits_{j=1}^{p}\frac{1}{n_{i,j}}
-						   \sum\limits_{t\in T_{i,j}}( b_t-f_j
-						   )}) =						      	   
-						   \prod\limits_{j=1}^{p}
-						   \left(
-						   \mathbbm{E}\left[e^{\frac{\lambda}{p}\cdot\left(
-						   	   \sum\limits_{t\in T_{i,j}}
-						   	   		\frac{(b_t-f_j)}{n_{i,j}}
-						\right)}\right]
-						   \right)=
-						   $		
-						   \\
-						   $ =						      	   
-						   \prod\limits_{j=1}^{p}
-						   \prod\limits_{t\in T_{i,j}}
-						   \left(
-						   \mathbbm{E}\left[e^{\frac{\lambda}
-						   {p}\cdot\left(
-						   	   		\frac{(b_t-f_j)}
-						   	   		{n_{i,j}}\right)}
-						   	   		\right]
-						   \right)$
-		Assuming that $\frac{1}{p}\cdot\left(\frac{b_t-f_j}
-		{n_{i,j}}\right) $ is bounded by 1 and has an average of 0, we can say that
-		\\
-		$$ \prod\limits_{j=1}^{p}
-						   \prod\limits_{t\in T_{i,j}}
-						   \left(
-						   \mathbbm{E}\left[e^{\frac{\lambda}
-						   {p}\cdot\left(
-						   	   		\frac{b_t-f_j}
-						   	   		{n_{i,j}}\right)}
-						   	   		\right]
-						   \right) \leq
-						   \prod\limits_{j=1}^{p}
-						   \prod\limits_{t\in T_{i,j}}
-						   \left(
-						   e^{\frac{\lambda^2}{p^2\cdot n^2_{i,j}}}
-						   \right)
-						   $$
-						   
-						  There are $n_{i,j}$ plays in $T_{i,j}$, and so we get:
-						  \\
-						  $\prod\limits_{j=1}^{p}
-						   \prod\limits_{t\in T_{i,j}}
-						   \left(
-						   e^{\frac{\lambda^2}{p^2\cdot n^2_{i,j}}}
-						   \right) = 
-						   \prod\limits_{j=1}^{p}						   
-						   \left(
-						   e^{\frac{\lambda^2}{p^2\cdot n_{i,j}}}
-						   \right) = 
-						   e^{
-						   \frac{\lambda^2}{p^2}
-						   \sum\limits_{j=1}^{p} \frac{1}{n_{i,j}}
-						   }$
-						
-		And now for the main point, we wish to show that 
-		$Pr[X_j > a] < \frac{1}{t}$\\
-		$Pr[X_j > a] = Pr[e^{X_j} < e^a] \leq e^{
-						   \frac{\lambda^2}{p^2}
-						   \sum\limits_{j=1}^{p} \frac{1}{n_{i,j}}
-						   - \lambda\cdot a}$
-		\\
-		\\
-		$\lambda = \frac{a}{\frac{2}{p^2}\left( \sum\limits_{j=1}^{p} \frac{1}{n_{i,j}} \right)} $ 
-		\\
-		with some reverse engineering and in order to get $Pr[X_j > a] < \frac{1}{t}$ we get that $a = \sqrt{\frac{\log(t) \sum\limits_{j=1}^{p} \frac{1}{n_{i,j}}}{p^2}}$ 
+%		Proof of $log(T)$ regret:
+%		\\
+%		Lets define : $Y_i(t) = \frac{1}{p}\sum\limits_{j=1}^{p}\frac{1}{n_{i,j}}
+%						   \sum\limits_{t\in T_{i,j}} b_t$		
+%		\\
+%		Where $n_{i,j}$ is the number of time arm $i$ is played in epoch $j$.\\
+%		$X_i = Y_i (b_t = b_t- f_j) =   \frac{1}{p}\sum\limits_{j=1}^{p}\frac{1}{n_{i,j}}
+%						   \sum\limits_{t\in T_{i,j}} b_t-f_j$	
+%		\\
+%		Now let's look at $\mathbbm{E}(e^{\lambda X_i})$
+%		\\	
+%		$\mathbbm{E}(e^{\lambda X_i}) = \mathbbm{E}(e^{\lambda\cdot(
+%		\frac{1}{p}\sum\limits_{j=1}^{p}\frac{1}{n_{i,j}}
+%						   \sum\limits_{t\in T_{i,j}}( b_t-f_j
+%						   )}) =						      	   
+%						   \prod\limits_{j=1}^{p}
+%						   \left(
+%						   \mathbbm{E}\left[e^{\frac{\lambda}{p}\cdot\left(
+%						   	   \sum\limits_{t\in T_{i,j}}
+%						   	   		\frac{(b_t-f_j)}{n_{i,j}}
+%						\right)}\right]
+%						   \right)=
+%						   $		
+%						   \\
+%						   $ =						      	   
+%						   \prod\limits_{j=1}^{p}
+%						   \prod\limits_{t\in T_{i,j}}
+%						   \left(
+%						   \mathbbm{E}\left[e^{\frac{\lambda}
+%						   {p}\cdot\left(
+%						   	   		\frac{(b_t-f_j)}
+%						   	   		{n_{i,j}}\right)}
+%						   	   		\right]
+%						   \right)$
+%		Assuming that $\frac{1}{p}\cdot\left(\frac{b_t-f_j}
+%		{n_{i,j}}\right) $ is bounded by 1 and has an average of 0, we can say that
+%		\\
+%		$$ \prod\limits_{j=1}^{p}
+%						   \prod\limits_{t\in T_{i,j}}
+%						   \left(
+%						   \mathbbm{E}\left[e^{\frac{\lambda}
+%						   {p}\cdot\left(
+%						   	   		\frac{b_t-f_j}
+%						   	   		{n_{i,j}}\right)}
+%						   	   		\right]
+%						   \right) \leq
+%						   \prod\limits_{j=1}^{p}
+%						   \prod\limits_{t\in T_{i,j}}
+%						   \left(
+%						   e^{\frac{\lambda^2}{p^2\cdot n^2_{i,j}}}
+%						   \right)
+%						   $$
+%						   
+%						  There are $n_{i,j}$ plays in $T_{i,j}$, and so we get:
+%						  \\
+%						  $\prod\limits_{j=1}^{p}
+%						   \prod\limits_{t\in T_{i,j}}
+%						   \left(
+%						   e^{\frac{\lambda^2}{p^2\cdot n^2_{i,j}}}
+%						   \right) = 
+%						   \prod\limits_{j=1}^{p}						   
+%						   \left(
+%						   e^{\frac{\lambda^2}{p^2\cdot n_{i,j}}}
+%						   \right) = 
+%						   e^{
+%						   \frac{\lambda^2}{p^2}
+%						   \sum\limits_{j=1}^{p} \frac{1}{n_{i,j}}
+%						   }$
+%						
+%		And now for the main point, we wish to show that 
+%		$Pr[X_j > a] < \frac{1}{t}$\\
+%		$Pr[X_j > a] = Pr[e^{X_j} < e^a] \leq e^{
+%						   \frac{\lambda^2}{p^2}
+%						   \sum\limits_{j=1}^{p} \frac{1}{n_{i,j}}
+%						   - \lambda\cdot a}$
+%		\\
+%		\\
+%		$\lambda = \frac{a}{\frac{2}{p^2}\left( \sum\limits_{j=1}^{p} \frac{1}{n_{i,j}} \right)} $ 
+%		\\
+%		with some reverse engineering and in order to get $Pr[X_j > a] < \frac{1}{t}$ we get that $a = \sqrt{\frac{\log(t) \sum\limits_{j=1}^{p} \frac{1}{n_{i,j}}}{p^2}}$ 
  
 \newpage
+
+%Instead of resetting the SBM on each epoch as in the Doubler algorithm, we will use an estimator as defined in the Balanced Doubler.
+%In order to cancel the offset in the estimator we will use average of averages:
+%\begin{equation}
+%\tilde{\mu}(y) = E\left[ \frac{1}{P}\sum\limits_{p=1}^P \frac{1}{n_{y,p}} \sum\limits_{t\in T} b_t\right]
+%\end{equation}
+%Where $n_{y,p}$ is the number of times arm $y$ was chosen in epoch $p$.
+%We will prove that this estimate is an unbiased estimate of $\mu(y)$ upto a constant that is invariant of $y$:
+%\begin{equation*}
+%E\left[ \frac{1}{P}\sum\limits_{p=1}^P \frac{1}{n_{y,p}} \sum\limits_{t\in T} \frac{\mu(y)-\mu(x_t)+1}{2}\right]= \mu(y) +\frac{1}{2} +E\left[ \frac{1}{P}\sum\limits_{p=1}^P \frac{1}{n_{y,p}} \sum\limits_{t\in T} \frac{\mu(x_t)}{2}\right]
+%\end{equation*}
+%In short: 
+%\begin{equation}
+%\tilde{\mu}(y)  = \mu(y) + C(P) 
+%\end{equation}
+%We will now show that in order to achieve $\mathcal{O}(\log T)$ regret bound we need a warm up phase.
+%We define $s$ to be the number of times each arm is played in the warm-up phase .
+%	Due to the fact that $\Delta_{x} \in [0,1]$ the total regret can be bound by:
+%	\begin{equation*}
+%	R=R_{warm-up}+R_{rest} \leq s \cdot p K + 
+%	Pr\left( \bigcup_{x\in X \backslash x^*} (\tilde{\mu}(x)>\tilde{\mu}(x^*)) \right)
+%	\end{equation*}
+%	
+%	We wish to bound $Pr(\tilde{\mu(x)}>\tilde{\mu(x^*)})$. 
+%	
+%	In the worst case scenario (standard deviation-wise) $n_{x,p} \equiv s$, meaning that arm $x$ was chosen in each epoch only $s$ times, $s\cdot p$ in total.
+%	The probability of choosing the wrong arm can be bound by:
+%	\begin{equation}\label{regret_bound}
+%	Pr(\tilde{\mu}(x)>\tilde{\mu}(x^*)) < 
+%	Pr(\tilde{\mu}(x) > \mu(x) + \frac{\Delta_x}{2})+ 
+%	Pr(\tilde{\mu}(x^*)< \mu(x^*) - \frac{\Delta_x}{2})
+%	\end{equation}
+%	
+%	We wish to bound the probability of choosing a sub optimal arm $x$:
+%	\begin{equation}\label{regret_bound}
+%	Pr(\tilde{\mu}(x)>\tilde{\mu}(x^*)) < 
+%	Pr(\tilde{\mu}(x) > \mu(x) + \frac{\Delta_x}{2})+ 
+%	Pr(\tilde{\mu}(x^*)< \mu(x^*) - \frac{\Delta_x}{2})
+%	\end{equation}
+%	
+%	And so the probability of choosing the suboptimal arm is:
+%	\begin{equation*}
+%	Pr\left[ \bigcup_{x\in X \backslash x^*} (\tilde{\mu}(x)>\tilde{\mu}(x^*)) \right] \leq \sum\limits_{x\in X \backslash x^*}Pr(\tilde{\mu}(x) > \mu(x) + \frac{\Delta_x}{2})+ 
+%	Pr(\tilde{\mu}(x^*)< \mu(x^*) - \frac{\Delta_x}{2})
+%	\end{equation*}
+%	
+%	In the case where each arm is chosen $s\cdot p$ we get:
+%	\begin{equation*}
+%	Pr\left[ \bigcup_{x\in X \backslash x^*} (\tilde{\mu}(x)>\tilde{\mu}(x^*)) \right] \leq 2Ke^{-\frac{\Delta^2_{x^*}}{2} s \cdot p }
+%	\end{equation*}
+%	And so the regret we can bound the regret by:
+%	\begin{equation*}
+%			R \leq s\cdot p K+ 2Ke^{-\frac{\Delta^2_{x^*}}{2} s \cdot p }
+%	\end{equation*}
+%	Lets find the minimum warm-start period we need at each round:
+%	\begin{equation*}
+%		\frac{d}{d(s\cdot p)} \left( s\cdot p K+ 2Ke^{-\frac{\Delta^2_{x^*}}{2} s \cdot p } \right) = K -\frac{\Delta^2_{x^*}}{2}\cdot 2Ke^{-\frac{\Delta^2_{x^*}}{2} s \cdot p } =0
+%	\end{equation*}
+%	
+%	\begin{equation*}
+%		\frac{1}{\Delta^2_{x^*} } = e^{-\frac{\Delta^2_{x^*}}{2} s \cdot p }
+%	\end{equation*}
+%	
+%	\begin{equation*}
+%	\log(\Delta^2_{x^*}) = \frac{\Delta^2_{x^*}}{2} s \cdot p
+%	\end{equation*}
+%	\begin{equation*}
+%	s\cdot p = \frac{2 \log(\Delta^2_{x^*})}{\Delta^2_{x^*}}
+%	\end{equation*}	
 	
+	\subsection{Sparring with Thompson Sampling}
+	The main drawback of the Balanced Doubler algorithm is the warm-start phase.
+	One of the benefits of the Thompson Sampling algorithm is that it does not need any warms start phase. 
+	As mentioned in section 2.1.2 the Thompson Sampling algorithm samples the random variables $\Theta_x, x\in X$ with Beta distribution and picks the arm with the highest value.
+	Until an arm $x$ is played, the random variable holds a uniform distribution, this roughly explains why the warm-start phase is not needed.
+		The Sparring with Thompson Sampling algorithms pseudo-code is presented in Figure~\ref{algo_SparringTS}.
+		The algorithm maintains the number of times each arm won and lost a comparison.
+		In each round the algorithm samples all the random variables for each of the SBMs : $\Theta_{x,R}, \Theta_{x,L}$ (for each arm $x \in X$) with beta distribution. 
+		The beta distribution is defined by the hyper-parameters $Success_{L,x}$, $Fails_{L,x}$ for the left set of random variable set and $Success_{R,x}, Fails_{R,x}$ for the right set(lines~\ref{alg:sts:Theta_L}, \ref{alg:sts:Theta_R}).
+		After the arms are compared and the outcome is observed all the relevant hyper-parameters are updated with the results.
 		
+	\begin{figure}[h]
+	\IncMargin{1em}
+		\begin{algorithm}[H]
+		\SetKwInput{KwInput}{Input}
+		
+		\KwInput{$X$, $\mathcal{S}_R, \mathcal{S}_L$}
+		\BlankLine
+		$t\leftarrow 1$\\
+\While{True}{
+	$\forall x \in X \Theta_{L,x} \sim Beta(Success_{L,x}+1, Fails_{L,x}+1)$ \label{alg:sts:Theta_L}\\
+	$\forall x \in X \Theta_{R,x} \sim Beta(Success_{R,x}+1, Fails_{R,x}+1)$ \label{alg:sts:Theta_R}\\
+	$x_t\leftarrow argmax_{x\in X}(\Theta_{L,x})$\\
+	$y_t\leftarrow argmax_{x\in X}(\Theta_{R,x})$\\
+	compare($x_t, y_t$)\\
+	observe $b_t$\\
+	$Success_{L,x_t} \leftarrow Success_{L,x_t} + \mathbbm{1}_{b_t=0}$\\
+	$Fails_{L,x_t} \leftarrow Fails_{L,x_t} + \mathbbm{1}_{b_t=1}$\\
+	$Success_{R,y_t} \leftarrow Success_{R,y_t} + \mathbbm{1}_{b_t=1}$\\
+	$Fails_{R,y_t} \leftarrow Fails_{R,y_t} + \mathbbm{1}_{b_t=0}$\\	
+	$t\rightarrow t+1$\\
+}
+			\caption{Sparring Thompson Sampling}
+		\end{algorithm}
+		\caption{Sparring Thompson Sampling Algorithm}\label{algo_SparringTS}
+	\end{figure}
+	
+	\subsection{Sparring with Thompson Sampling Turbo}
+	From the experiments conducted on the Sparring with Thompson Sampling algorithm we witnessed that in the initial phases the algorithm explores more then needed. 
+	In order to give the algorithm a more "aggressive behaviour" in the initial rounds and keep the exploration of the regular Thompson Sampling in advanced rounds we added a time dependent factor of $\log(1+t\cdot 2^{-t/k^2}))$ to the Fails hyper parameter as seen in \eqref{alg:stst:Theta_L} and \eqref{alg:stst:Theta_R} in the Sparring with Thompson Sampling Turbo algorithm.
+	By increasing the effective number of fails the arms with successes "stand out".  We do not wish to keep this "aggressive behaviour" for the advance rounds and hence $2^{-t/k^2}$ in $\log(1+t\cdot 2^{-t/k^2}))$ in order to remove this factor from advance rounds.
+	The Sparring with Thompson Sampling algorithms pseudo-code is presented in Figure~\ref{alg:SparringTS_turbo}.
+	 
+	\begin{figure}[h]
+	\IncMargin{1em}
+		\begin{algorithm}[H]
+		\SetKwInput{KwInput}{Input}
+		
+		\KwInput{$X$, $\mathcal{S}_R, \mathcal{S}_L$}
+		\BlankLine
+		$t\leftarrow 1$\\
+\While{True}{
+	$\forall x \in X \Theta_{L,x} \sim Beta(Success_{L,x}+1, Fails_{L,x}+1+\log(1+t\cdot 2^{-t/k^2}))$ \label{alg:stst:Theta_L}\\
+	$\forall x \in X \Theta_{R,x} \sim Beta(Success_{R,x}+1, Fails_{R,x}+1+\log(1+t\cdot 2^{-t/k^2}))$ \label{alg:stst:Theta_R}\\
+	$x_t\leftarrow argmax_{x\in X}(\Theta_{L,x})$\\
+	$y_t\leftarrow argmax_{x\in X}(\Theta_{R,x})$\\
+	compare($x_t, y_t$)\\
+	observe $b_t$\\
+	%self.fails[arm]+1 + math.log(1+t*pow(2, -t/(pow(self.n_arms, 2))))
+	$Success_{L,x_t} \leftarrow Success_{L,x_t} + \mathbbm{1}_{b_t=0}$\\
+	$Fails_{L,x_t} \leftarrow Fails_{L,x_t} + \mathbbm{1}_{b_t=1}$\\
+	$Success_{R,y_t} \leftarrow Success_{R,y_t} + \mathbbm{1}_{b_t=1}$\\
+	$Fails_{R,y_t} \leftarrow Fails_{R,y_t} + \mathbbm{1}_{b_t=0}$\\	
+	$t\rightarrow t+1$\\
+}
+			\caption{Sparring Thompson Sampling Turbo}
+		\end{algorithm}
+		\caption{Sparring Thompson Sampling Algorithm Turbo}\label{alg:SparringTS_turbo}
+	\end{figure}
+					
+	\subsection{Unforgetful Thompson Sampling Doubler}
+		Another improvement of the Doubler algorithm is the Unforgetful Thompson Sampling Doubler algorithm. Similarly to the Improved Doubler algorithm, we do not reset the SBM in each epoch and use the Thompson Sampling method as the SBM black-box. 
+		The idea for this algorithm came while trying to prove the logarithmic bound of the Improved Doubler algorithm.	
+		This approach outperformed all the other algorithms apart from the Thompson Sampling Sparring.
+		The algorithms pseudo-code is presented in Figure~\ref{algo_uts_doubler}.
+
+		\begin{figure}[h]
+	\IncMargin{1em}
+		\begin{algorithm}[H]
+		\SetKwInput{KwInput}{Input}
+		\KwInput{$X$, $\mathcal{S}$}
+		\BlankLine
+		$\mathcal{L} \leftarrow X$\\
+		$p\leftarrow 1$\\
+		\While{True}{
+			\For{$t = 2^{p-1}$ \KwTo $2^{p}$}{
+				choose $x_t$ uniformly from $\mathcal{L}$\\
+				$\forall x \in X \Theta_{R,x} \sim Beta(Success_{R,x}+1, Fails_{R,x}+1)$\\
+				$y_t\leftarrow argmax_{x \in X}(\Theta_{R,x})$)\\
+				compare $(x_t , y_t )$\\
+				observe choice $b_t$\\
+				$Success_{R,y_t} \leftarrow Success_{R,y_t} + \mathbbm{1}_{b_t=1}$\\
+				$Fails_{R,y_t} \leftarrow Fails_{R,y_t} + \mathbbm{1}_{b_t=0}$\\	
+			}
+			$\mathcal{L} \leftarrow$the multi-set of arms played as $y_t$ in the last for-loop.\\
+			$p \rightarrow p+1$
+}
+			\caption{Unforgetful Thompson Sampling Doubler}
+		\end{algorithm}
+		\caption{Unforgetful Thompson Sampling Doubler}\label{algo_uts_doubler}
+	\end{figure}
+		
+		\newpage
+
 \section{Experiments}
+To evaluate our algorithms, we apply them on randomly synthetic data, special test cases (will be explained shortly), and also we apply them to the problem of scorer evaluation from the field of information retrieval (IR) (Manning et al., 2008).  
+A scorer is a function that takes a user's search query and ranks the documents in a collection according to their relevance to that query. Scorer evaluation aims to determine which set of scorers performs best.
 
-To evaluate our algorithms, we apply them to the problem of
-scorer evaluation from the field of information retrieval
-(IR) (Manning et al., 2008). A scorer is a
-function that takes a user's search query and
-ranks the documents in a collection according to their
-relevance to that query. Scorer evaluation aims to determine
-which set of scorers performs best.
-\\
-An effective way to achieve this is to use interleaved
-comparisons (Radlinski et al., 2008),  
-\\
-Interleaved comparison methods, which compare scorers
-using naturally occurring user interactions such as clicks. 
-Compared to evaluations based on manual judgements from expert annotators.
-Since this data is based on the behaviour of real users, it more
-accurately reflects how well their information needs are met. 
-Comparing two scorers requires presenting users with
-interleaved result lists based on those scorers and observing how
-they interact with them. 
-Given a set of K scorers, the
-problem of finding the best ranker can then be modelled as a K-armed Dueling Bandit problem, with each arm relating to a scorer.
-Our setup is built on real IR data,
-namely the LETOR MQ2007 dataset (Liu et al., 2007).
-Using this data set, we create a set of 46 scorers, each
-relating to a ranking feature provided in the
-data set, e.g., PageRank. The scorer evaluation task
-then corresponds to conclude which single feature
-is the best scorer (Hofmann et al., 2013).
-To compare a pair of arms, we use the interleaved comparison
-method could be used instead. 
-To model the user’s click behaviour on the resulting interleaved lists, we employ a probabilistic user model that uses as input the manual labels (classifying documents as relevant or not for given queries) provided with both datasets. 
-Queries are sampled randomly and clicks are generated probabilistically by conditioning on these assessments using a user model that resembles the behaviour of an actual user. 
+Given a set of K scorers, the problem of finding the best scorer can then be modelled as a K-armed Dueling Bandit problem, with each arm relating to a scorer.
 This approach follows an experimental paradigm that has previously been
-used for assessing the performance of rankers [???].
-We will present the utility based regret and the general regret (as define in section 2.1 and 2.2) on the MQ2007. 
-\\
-We will conduct the following experiments:
+used for assessing the performance of scorers [???].
+
+\subsection{Real Data} 
+Or experiments is built on standard IR datasets, namely the LETOR MQ2007 and MSLR-WEB30K datasets (Liu et al., 2007) \footnote{These data sets can be retrieved from http://research.microsoft.com/en-us/um/beijing/projects/letor/}
+MQ2007 Holds about 65 Million rows and MSLR-WEB30K holds 30K rows.
+Each row in the data is a query-url pair, where the number in the beginning of the row signifies the relevance of this result and each of the following pairs is a scorer-score pair.
+Here is an example of a single row from MQ2007:  
+\begin{equation}\label{queri}
+2 \text{ qid}:10032, 1:0.0565, 2:0.0000, 3:0.6667 ... 45:0.0000, 46:0.0769
+\end{equation}
+This data set holds 46 scorers, each relating to a ranking feature provided in the data set. 
+These scores are used in order to rank the relevance of a search query to a document. A good example of a feature is the number of times the query shows up in the body of the document. 
+The MSLR-WEB30K is built in the same manner, the only difference is the number of scorers (136 in total).
+We use two different settings,  BPDP and UBDB, for each of these settings we use the data sets in a different manner.
+\subsubsection{Converting LETOR data to a PBDB matrix}
+We used the following method to convert the method to a PBDB matrix $P$ over the set of scorers.  
+The method is based on a combination of standard IR techniques for simulating noisy comparisons between lists.  We show the method in the pseudo-code in Figure~\ref{data_converting}.
+In order to set the preference matrix we need to compare between the scorers/arms, were in our setting we use the Interleaved Comparison method (Radlinski et al., 2008).
+The main idea behind the Interleaved Comparison is given two alternatives and deciding which of the two they preferred. 
+In particular, Radlinski proposed a method for presenting the results from two rankers, where a ranker is a function that when given a query, it returns a list of elements (i.e. websites, documents, actions) ordered according to the rankers functionality (i.e number of times the query showed up in the text of the document).
+The two rankers provide a rank, for instance ranker $A$ provides $(a_1,a_2,a_3)$ and ranker $B$ provides the rank $(b_1,b_2,b_3)$.
+The interleaved rank is a "merge" of the ranks (i.e $(a_1,b_1,a_2)$). 
+For each query an interleaved rank is presented to the user. If the user clicks $a_1$ from the given example we assume that ranker $A$ is preferred over ranker $B$.
+In order order to create a ranking several queries-url pairs are taken, with the same query but different urls, ranked them according to the relevant scorers and then two ranks are interleaved into an interleaved rank.
+Sets of rows with the same query and different url's are sampled randomly, interleaved into an interleaved rank and clicks are generated probabilistically, according to the score of the relevant scorer for the sampled query. 
+In order to set  $P = [p_{x,y}]$ each arm is compared to every other arm , using the interleaved comparison method, and the empirical probability is set.
+
+\begin{figure}[h]
+	\IncMargin{1em}
+		\begin{algorithm}[H]
+		\SetKwInput{KwInput}{Input}
+		
+		\KwInput{LETOR Data Set, $X, K=|X|$}
+		$W =[w_{x,y}]$\\
+		$P =[p_{x,y}]$
+		\BlankLine
+		$\mathcal{S} \leftarrow N$ sets of queries-url with the same query from data-set.\\
+		\For{$t = 1$ \KwTo $80,000$}{
+		\ForAll{$x\in X$}{
+			\ForAll{$y\in X$}{
+			$s_x\leftarrow$ set from $\mathcal{S}$ sorted according to scorer $x$\\
+			$s_y\leftarrow$ set from $\mathcal{S}$ sorted according to scorer $y$\\	
+			$I\leftarrow$ interleaved set of $s_x,s_y$.\\
+			Generate a click.\\
+			If a row from set $s_x$ was clicked $w_{x,y}\leftarrow w_{x,y}+1$\\
+			If a row from set $s_y$ was clicked $w_{y,x}\leftarrow w_{y,x}+1$
+			}
+		}
+		}
+		$P =[p_{x,y}]\leftarrow \left[\frac{w_{x,y}}{w_{x,y}+w_{y,y}}\right]$
+
+			\caption{Converting LETOR Data to the Preference Matrix}
+		\end{algorithm}
+		\caption{Converting LETOR Data Procedure}\label{data_converting}
+	\end{figure}
+
+In order to evaluate our algorithms in this settings we use the PBDB regret as defined in \eqref{eq:preference_regret}
+
+\subsubsection{Converting LETOR data to UBDB utilities}
+
+In the UBDB setting, in each round $t$, a query is sampled from the MQ2007 data-set, the unobserved utilities $u_t,v_t$ are set according to the chosen arms, and finally the observed feedback $b_t$ is defined by a Bernoulli trail with $ p = \frac{u_t -v_t+1}{2}$
+
+%uniform random variable $\chi \sim U[0,1]$:
+%\begin{equation}\label{observed_feedback}
+%b_t = \mathbbm{1}\left(\chi > \frac{u_t -v_t+1}{2}\right)
+%\end{equation} 
+If we use to the above example \eqref{queri} and set the chosen arms to $x_t = 1, y_t=3$ then $b_t \sim \textit{Bernoulli}\left(\frac{0.0565 -0.6667+1}{2}\right)$.
+In order to evaluate our algorithms in this settings we use the UBDB regret as defined in \eqref{eq:utility_regret} and $\mu_x$, the average utility of arm $x$, (that is needed in order to calculate the regret) is set to be the average of scores in the data set for scorer $x$.
+
+\subsection{Synthetic Data}
+In order to evaluate how our algorithms react to special cases of input we use synthetic data that is predefined.
+%\subsubsection{Synthetic PBDB Matrix}
+%In our experiments we let our algorithm handle the following scenarios:
+%\begin{enumerate}
+%\item No Condorcet winner
+%\item Cyclic P matrix
+%\end{enumerate}
+%Most of the algorithm in this work assume a Condorcet winner, in our experiments we show how each of the algorithm react if this assumption is dropped.
+%Another special case is where each arm is preferred over the previous one, for example with 3 arms - arm 1 is preferred over arm 2, arm 2 is  preferred over arm 3 and arm 3 is preferred over arm 1. 
+%The regret is defined similarly to the real data experiments.
+In our experiments we let our algorithm handle the following scenarios:
 \begin{enumerate}
-
-\item 7 arms - UBDB
-\item 16 arms - UBDB
-\item 46 arms - UBDB
-\item 7 arms - PBDB
-\item 16 arms - PBDB
-\item 46 arms - PBDB
-\item close arms
-\item one strong arm
-\item no Condorcet winner
-\item Cyclic P matrix
-
+\item Linear Mean Utilities
+\item Small Gap
+\item Big Gap
+\item Random Mean Utilities
 \end{enumerate}
+The first special case we evaluate is Linear Mean Utilities, for example with 5 arms $(\mu_1, \mu_2, \mu_3, \mu_4, \mu_5) = (0, 0.25, 0.5, 0.75, 1)$.
+Two other special cases are when there is one mean utility that is notably higher then all the other arms, and the last case is where the mean utilities of all the arms a fairly close .
+The last case we simulate is random mean utilities.
+The regret is defined similarly to the real data experiments.
 
 \newpage
-
 \subsection{Results}
-We will start with displaying the results for 7 arms.
-From Figure 1 we can clearly see that the SAVAGE and Doubler algorithms are outperformed by the other algorithms and so will be left out from the next figures.
+In this section we will be showing simulation results for PBDB and UBDB setting, with various algorithms and several values of K for $T = 2^{17}$ time steps. 
+Each graph shows the empirical mean of the Cumulative Regret, over $M$ independent runs.
+The mean of the Cumulative Regret for each time step is simply:
+	\begin{equation}
+	 \hat{R}(t) = \frac{1}{M}\sum_{m=1}^{M} R_m(t)
+	\end{equation}
+Where $R_m(t)$ is cumulative regret as defined in \eqref{eq:utility_regret} and \eqref{eq:preference_regret}.
+For the convinence of the reader we provide a table of all the simulations and relevant figure:
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ |p{2cm}|p{2cm}|p{4cm}|  }
+
+\hline
+ \multicolumn{3}{|c|}{Simulation} \\
+ \hline
+   \hline
+Figure & K & Test Case \\
+\hline
+  16     & 8  & Small Gap  \\
+  \hline
+  17     & 16  &  Small Gap  \\
+  \hline
+  18     & 46  &  Small Gap  \\
+  \hline
+  19     & 8  &  Linear Mean Utilities \\
+  \hline
+  20     & 16  & Linear Mean Utilities  \\
+  \hline
+  21     & 46  & Linear Mean Utilities  \\
+  \hline
+  22     & 8  &  Big Gap \\
+  \hline
+  23     & 16  &  Big Gap \\
+  \hline
+  24     & 46  &  Big Gap \\
+
+  \hline
+  25     & 8  &  Random Mean Utilities  \\
+  \hline
+  26     & 16  &  Random Mean Utilities  \\
+  \hline
+  27     & 46  &  Random Mean Utilities  \\
+  \hline
+  28     & 8  &  MQ2007 Data Set \\
+  \hline
+  29     & 16  & MQ2007 Data Set  \\
+  \hline
+  30     & 46  & MQ2007 Data Set  \\
+  \hline
+  31     & 46  & WEB30K Data Set  \\
+  \hline
+\end{tabular}
+\end{table}
+In some test cases, some algorithms are extremely out-performed by the other algorithms, in those cases we leave out the plot of the cumulative regret of those algorithms.
+
+\subsubsection{Small Gap}
+
 \begin{figure}[h!]
 \centering
-  \includegraphics[scale=0.5, natwidth=610,natheight=642]{figures/all_MQ2007_7arms.png}
-  \caption{Utility Based Regret with 7 Arms}
+  \includegraphics[scale=0.8]{graphs/close_arm_8.png}
+  \caption{Small Gap - 8 Arms}
 \end{figure}
-
-For a larger number of arms we can see that RCS and RUCB are outperformed by the other algorithms.
 
 \begin{figure}[h!]
 \centering
-  \includegraphics[scale=0.5, natwidth=610,natheight=642]{figures/all_MQ2007_24arms.png}
-  \caption{Utility Based Regret with 24 Arms}
+  \includegraphics[scale=0.8]{graphs/close_arm_16.png}
+  \caption{Small Gap - 16 Arms}
 \end{figure}
 
-And for 46 arms we can see that Sparring with Thompson Sampling methods performs better than all the other algorithms.
-
-
-\subsection{Sparring}
-
-We can see the clear advantage of using the Sparring algorithm over the RCS algorithm when dealing with a large number of arms.
 \begin{figure}[h!]
 \centering
-\begin{subfigure}{.5\textwidth}
-  \centering
-  \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/rcs_sparring_MQ2007_7arms.png}
-  \caption{7 Arms}
-  \label{fig:sub1}
-\end{subfigure}%
-\begin{subfigure}{.5\textwidth}
-  \centering
-  \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/rcs_sparring_MQ2007_16arms.png}
-  \caption{16 Arms}
-  \label{fig:sub2}
-\end{subfigure}
-\begin{subfigure}{.5\textwidth}
-  \centering
-  \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/rcs_sparring_MQ2007_46arms.png}
-  \caption{46 Arms}
-  \label{fig:sub2}
-\end{subfigure}
-\caption{RCS Versus Sparring with Utility Based Regret}
-\label{fig:test}
+  \includegraphics[scale=0.8]{graphs/close_arm_46.png}
+  \caption{Small Gap - 46 Arms}
 \end{figure}
 
 
-With a small number of arms (Fig 1.) we can observe that the RCS algorithm quickly converges to the optimal arm.
-\\
-With a larger number of arms we can see that Sparring out-performs the RCS algorithm. 
-\\
-Now lets look at the general regret (as defined section 2.2). Here we used 46 arms:
-\begin{figure}[h!]
-  \centering
-     \includegraphics[scale=0.4, natwidth=410,natheight=442]{figures/rcs_sparring_MQ2007_general.png} 
-  \caption{RCS Versus Sparring with Preference Based Regret with 46 Arms}
-\end{figure}
+\subsubsection{Linear Mean Utilities}
 
-
-\newpage
-\subsection{Doubler}
-Now lets have a look at the Doubler algorithm using the same data set.
 \begin{figure}[h!]
 \centering
-\begin{subfigure}{.5\textwidth}
-  \centering
-  \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/doubler_sparring_MQ2007_7arms.png}
-  \caption{7 Arms}
-  \label{fig:sub1}
-\end{subfigure}%
-\begin{subfigure}{.5\textwidth}
-  \centering
-  \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/doubler_sparring_MQ2007_16arms.png}
-  \caption{16 Arms}
-  \label{fig:sub2}
-\end{subfigure}
-\begin{subfigure}{.5\textwidth}
-  \centering
-  \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/doubler_sparring_MQ2007_46arms.png}
-  \caption{46 Arms}
-  \label{fig:sub2}
-\end{subfigure}
-\caption{Doubler Versus Sparring with Utility Based Regret}
-\label{fig:test}
+  \includegraphics[scale=0.8]{graphs/linear_arm_8.png}
+  \caption{Linear Mean Utilities - 8 Arms}
 \end{figure}
 
-The general regret:
-\begin{figure}[h!]
-  \centering
-     \includegraphics[scale=0.2, natwidth=410,natheight=442]{figures/doubler_sparring_MQ2007_general.png} 
-  \caption{Doubler Versus Sparring with Preference Based Regret with 46 Arms}
-\end{figure}
-
-\newpage
-\subsection{Improved Doubler}
-Now lets have a look at the Improved Doubler algorithm using the same data set.
 \begin{figure}[h!]
 \centering
-\begin{subfigure}{.5\textwidth}
-  \centering
-  \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/improved_doubler_sparring_MQ2007_7arms.png}
-  \caption{7 Arms}
-  \label{fig:sub1}
-\end{subfigure}%
-\begin{subfigure}{.5\textwidth}
-  \centering
-  \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/improved_doubler_sparring_MQ2007_16arms.png}
-  \caption{16 Arms}
-  \label{fig:sub2}
-\end{subfigure}
-\begin{subfigure}{.5\textwidth}
-  \centering
-  \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/improved_doubler_sparring_MQ2007_46arms.png}
-  \caption{46 Arms}
-  \label{fig:sub2}
-\end{subfigure}
-\caption{Improved Doubler Versus Sparring with Utility Based Regret}
-\label{fig:test}
+  \includegraphics[scale=0.8]{graphs/linear_arm_16.png}
+  \caption{Linear Mean Utilities - 16 Arms}
 \end{figure}
 
-The general regret:
-\begin{figure}[h!]
-  \centering
-     \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/improved_doubler_sparring_MQ2007_general.png} 
-  \caption{Improved Doubler Versus Sparring with Preference Based Regret with 46 Arms}
-\end{figure}
-\newpage
-\subsection{Balanced Doubler}
-Now lets have a look at the Balanced Doubler algorithm using the same data set.
-\begin{figure}[h!]
-  \centering
-     \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/balanced_doubler_sparring_MQ2007_16arms.png} 
-  \caption{Balanced Doubler Versus Sparring with Utility Based Regret with 16 Arms}
-\end{figure}
-
-\subsection{Thompson Sampling Doubler}
-Now lets have a look at the Balanced Doubler algorithm using the same data set.
 \begin{figure}[h!]
 \centering
-\begin{subfigure}{.5\textwidth}
-  \centering
-  \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/improved_doubler_TS_sparring_MQ2007_7arms.png}
-  \caption{7 Arms}
-  \label{fig:sub1}
-\end{subfigure}%
-\begin{subfigure}{.5\textwidth}
-  \centering
-  \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/improved_doubler_TS_sparring_MQ2007_16arms.png}
-  \caption{16 Arms}
-  \label{fig:sub2}
-\end{subfigure}
-\begin{subfigure}{.5\textwidth}
-  \centering
-  \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/improved_doubler_TS_sparring_MQ2007_46arms.png}
-  \caption{46 Arms}
-  \label{fig:sub2}
-\end{subfigure}
-\caption{Improved Doubler Versus Sparring with Utility Based Regret}
-\label{fig:test}
+  \includegraphics[scale=0.8]{graphs/linear_arm_46.png}
+  \caption{Linear Mean Utilities - 46 Arms}
 \end{figure}
 
-The general regret:
-\begin{figure}[h!]
-  \centering
-     \includegraphics[scale=0.4, natwidth=410,natheight=442]{figures/improved_doubler_TS_sparring_MQ2007_general.png} 
-  \caption{Improved Doubler Versus Sparring with Preference Based Regret with 46 Arms}
-\end{figure}
-
-\subsection{Thompson Sampling Sparring}
-And finally, lets show the results of  the sparring algorithm when using Thompson Sampling black boxes.
+\subsubsection{Big Gap}
 
 \begin{figure}[h!]
-  \centering
-     \includegraphics[scale=0.4, natwidth=410,natheight=442]{figures/TS_sparring_sparring_MQ2007_16arms.png} 
-  \caption{Thompson Sampling Sparring Versus Sparring with Utility Based Regret with 16 Arms}
+\centering
+  \includegraphics[scale=0.8]{graphs/one_strong_arm_8.png}
+  \caption{Big Gap - 8 Arms}
 \end{figure}
 
-The general regret:
 \begin{figure}[h!]
-  \centering
-     \includegraphics[scale=0.4, natwidth=410,natheight=442]{figures/TS_sparring_sparring_MQ2007_general.png} 
-  \caption{Thompson Sampling Sparring Versus Sparring with Preference Based Regret with 46 Arms}
+\centering
+  \includegraphics[scale=0.8]{graphs/one_strong_arm_16.png}
+  \caption{Big Gap - 16 Arms}
 \end{figure}
+
+\begin{figure}[h!]
+\centering
+  \includegraphics[scale=0.8]{graphs/one_strong_arm_46.png}
+  \caption{Big Gap - 46 Arms}
+\end{figure}
+
+\subsubsection{Random Mean Utilities}
+
+\begin{figure}[h!]
+\centering
+  \includegraphics[scale=0.8]{graphs/random_data_8.png}
+  \caption{Random Mean Utilities - 8 Arms}
+\end{figure}
+
+\begin{figure}[h!]
+\centering
+  \includegraphics[scale=0.8]{graphs/random_data_16.png}
+  \caption{Random Mean Utilities - 16 Arms}
+\end{figure}
+
+\begin{figure}[h!]
+\centering
+  \includegraphics[scale=0.8]{graphs/random_data_46.png}
+  \caption{Random Mean Utilities - 46 Arms}
+\end{figure}
+
+\subsubsection{MQ2007 Data Set}
+
+\begin{figure}[h!]
+\centering
+  \includegraphics[scale=0.8]{graphs/real_data_8.png}
+  \caption{MQ2007 Data Set - 8 Arms}
+\end{figure}
+
+\begin{figure}[h!]
+\centering
+  \includegraphics[scale=0.8]{graphs/real_data_16.png}
+  \caption{MQ2007 Data Set - 16 Arms}
+\end{figure}
+
+\begin{figure}[h!]
+\centering
+  \includegraphics[scale=0.8]{graphs/real_data_46.png}
+  \caption{MQ2007 Data Set - 46 Arms}
+\end{figure}
+
+\subsubsection{WEB30K Data Set}
+\begin{figure}[h!]
+\centering
+  \includegraphics[scale=0.8]{graphs/preference_real_data_46.png}
+  \caption{WEB30K Data Set - 46 Arms}
+\end{figure}
+
+\subsection{Conclusions of Results}
+World domination
+
+%To evaluate our algorithms, we apply them on randomly synthetic data, special test cases (will be explained shortly), and also we apply them to the problem of scorer evaluation from the field of information retrieval (IR) (Manning et al., 2008).  
+%A scorer is a function that takes a user's search query and ranks the documents in a collection according to their relevance to that query. Scorer evaluation aims to determine which set of scorers performs best.
+%
+%Given a set of K scorers, the problem of finding the best scorer can then be modelled as a K-armed Dueling Bandit problem, with each arm relating to a scorer.
+%This approach follows an experimental paradigm that has previously been
+%used for assessing the performance of scorers [???].
+%We use two different settings, one for the BPDP case and one for the UBDB case.
+%In the UBDB case the  setup is built on real IR data, namely the LETOR MQ2007 dataset (Liu et al., 2007).
+%Each row in the data is a query-url pair, where the number in the beginning of the row signifies the relevance of this result and each of the following pairs is a scorer-score pair.
+%Here is an example of a single query:  
+%\begin{equation}\label{queri}
+%2 \text{ qid}:10032, 1:0.0565, 2:0.0000, 3:0.6667 ... 45:0.0000, 46:0.0769
+%\end{equation}
+%Using this data set, we sample the set of 46 scorers, each relating to a ranking feature provided in the data set, e.g., PageRank. 
+%The scorer evaluation task then corresponds to conclude which single feature is the best scorer (Hofmann et al., 2013).
+%In the UBDB setting, in each round $t$, a query is sampled from the MQ2007 data-set, the unobserved utilities $u_t,v_t$ are set according to the chosen arms, and finally the observed feedback $b_t$ is generated according to the uniform random variable $\chi \sim U[0,1]$:
+%\begin{equation}\label{observed_feedback}
+%b_t = \mathbbm{1}\left(\chi > \frac{u_t -v_t+1}{2}\right)
+%\end{equation} 
+%If we use to the above example \eqref{queri} and set the chosen arms to $x_t = 1, y_t=3$ then $b_t = \mathbbm{1}\left(\chi > \frac{0.0565 -0.6667+1}{2}\right)$.
+%
+%In the PBDB setting a preference matrix $P = [p_{x,y}]$ is needed to model the preference between the scorers.
+%We will now explain how the preference matrix is set:
+%To compare a pair of arms, we use the Interleaved Comparison method (Radlinski et al., 2008).
+%The main idea behind the Interleaved Comparison is given two alternatives and deciding which of the two they preferred. 
+%In particular, Radlinski proposed a method for presenting the results from two rankers, where a ranker is a function that when given a query, it returns a list of elements (i.e. websites, documents, actions) ordered according to the rankers functionality (i.e number of times the query showed up in the text of the document).
+%The two rankers provide a rank, for instance ranker $A$ provides $(a_1,a_2,a_3)$ and ranker $B$ provides the rank $(b_1,b_2,b_3)$.
+%The interleaved rank is a "merge" of the ranks (i.e $(a_1,b_1,a_2)$). 
+%For each query an interleaved rank is presented to the user. If the user clicks $a_1$ from the given example we assume that ranker $A$ is preferred over ranker $B$.
+%In order order to create a ranking several queries-url pairs are taken, with the same query but different urls, ranked them according to the relevant scorers and then two ranks are interleaved into an interleaved rank.
+%Queries are sampled randomly and clicks are generated probabilistically, according to the score of the relevant scorer for the sampled query. 
+%In order to set  $P = [p_{x,y}]$ each arm is compared to every other arm , using the interleaved comparison method, and the empirical probability is set.
+%
+%We divide our experiments into two cases: UBDB setting and PBDB setting.
+%In the following sections we will present the results of the utility based regret and the preference based regret (as define in section 2.1 and 2.2) using the MQ2007 data-set. 
+%\\
+%We will conduct the following experiments:
+%\begin{enumerate}
+%
+%\item 7 arms - UBDB
+%\item 16 arms - UBDB
+%\item 46 arms - UBDB
+%\item 7 arms - PBDB
+%\item 16 arms - PBDB
+%\item 46 arms - PBDB
+%\item liner arm
+%\item close arms
+%\item one strong arm
+%\item no Condorcet winner
+%\item Cyclic P matrix
+%
+%\end{enumerate}
+
+%
+%
+%\subsection{Results}
+%We will start with displaying the results for 7 arms.
+%From Figure 1 we can clearly see that the SAVAGE and Doubler algorithms are outperformed by the other algorithms and so will be left out from the next figures.
+%\begin{figure}[h!]
+%\centering
+%  \includegraphics[scale=0.5, natwidth=610,natheight=642]{figures/all_MQ2007_7arms.png}
+%  \caption{Utility Based Regret with 7 Arms}
+%\end{figure}
+%
+%For a larger number of arms we can see that RCS and RUCB are outperformed by the other algorithms.
+%
+%\begin{figure}[h!]
+%\centering
+%  \includegraphics[scale=0.5, natwidth=610,natheight=642]{figures/all_MQ2007_24arms.png}
+%  \caption{Utility Based Regret with 24 Arms}
+%\end{figure}
+%
+%And for 46 arms we can see that Sparring with Thompson Sampling methods performs better than all the other algorithms.
+%
+%
+%\subsection{Sparring}
+%
+%We can see the clear advantage of using the Sparring algorithm over the RCS algorithm when dealing with a large number of arms.
+%\begin{figure}[h!]
+%\centering
+%\begin{subfigure}{.5\textwidth}
+%  \centering
+%  \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/rcs_sparring_MQ2007_7arms.png}
+%  \caption{7 Arms}
+%  \label{fig:sub1}
+%\end{subfigure}%
+%\begin{subfigure}{.5\textwidth}
+%  \centering
+%  \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/rcs_sparring_MQ2007_16arms.png}
+%  \caption{16 Arms}
+%  \label{fig:sub2}
+%\end{subfigure}
+%\begin{subfigure}{.5\textwidth}
+%  \centering
+%  \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/rcs_sparring_MQ2007_46arms.png}
+%  \caption{46 Arms}
+%  \label{fig:sub2}
+%\end{subfigure}
+%\caption{RCS Versus Sparring with Utility Based Regret}
+%\label{fig:test}
+%\end{figure}
+%
+%
+%With a small number of arms (Fig 1.) we can observe that the RCS algorithm quickly converges to the optimal arm.
+%\\
+%With a larger number of arms we can see that Sparring out-performs the RCS algorithm. 
+%\\
+%Now lets look at the general regret (as defined section 2.2). Here we used 46 arms:
+%\begin{figure}[h!]
+%  \centering
+%     \includegraphics[scale=0.4, natwidth=410,natheight=442]{figures/rcs_sparring_MQ2007_general.png} 
+%  \caption{RCS Versus Sparring with Preference Based Regret with 46 Arms}
+%\end{figure}
+%
+%
+%\newpage
+%\subsection{Doubler}
+%Now lets have a look at the Doubler algorithm using the same data set.
+%\begin{figure}[h!]
+%\centering
+%\begin{subfigure}{.5\textwidth}
+%  \centering
+%  \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/doubler_sparring_MQ2007_7arms.png}
+%  \caption{7 Arms}
+%  \label{fig:sub1}
+%\end{subfigure}%
+%\begin{subfigure}{.5\textwidth}
+%  \centering
+%  \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/doubler_sparring_MQ2007_16arms.png}
+%  \caption{16 Arms}
+%  \label{fig:sub2}
+%\end{subfigure}
+%\begin{subfigure}{.5\textwidth}
+%  \centering
+%  \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/doubler_sparring_MQ2007_46arms.png}
+%  \caption{46 Arms}
+%  \label{fig:sub2}
+%\end{subfigure}
+%\caption{Doubler Versus Sparring with Utility Based Regret}
+%\label{fig:test}
+%\end{figure}
+%
+%The general regret:
+%\begin{figure}[h!]
+%  \centering
+%     \includegraphics[scale=0.2, natwidth=410,natheight=442]{figures/doubler_sparring_MQ2007_general.png} 
+%  \caption{Doubler Versus Sparring with Preference Based Regret with 46 Arms}
+%\end{figure}
+%
+%\newpage
+%\subsection{Improved Doubler}
+%Now lets have a look at the Improved Doubler algorithm using the same data set.
+%\begin{figure}[h!]
+%\centering
+%\begin{subfigure}{.5\textwidth}
+%  \centering
+%  \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/improved_doubler_sparring_MQ2007_7arms.png}
+%  \caption{7 Arms}
+%  \label{fig:sub1}
+%\end{subfigure}%
+%\begin{subfigure}{.5\textwidth}
+%  \centering
+%  \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/improved_doubler_sparring_MQ2007_16arms.png}
+%  \caption{16 Arms}
+%  \label{fig:sub2}
+%\end{subfigure}
+%\begin{subfigure}{.5\textwidth}
+%  \centering
+%  \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/improved_doubler_sparring_MQ2007_46arms.png}
+%  \caption{46 Arms}
+%  \label{fig:sub2}
+%\end{subfigure}
+%\caption{Improved Doubler Versus Sparring with Utility Based Regret}
+%\label{fig:test}
+%\end{figure}
+%
+%The general regret:
+%\begin{figure}[h!]
+%  \centering
+%     \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/improved_doubler_sparring_MQ2007_general.png} 
+%  \caption{Improved Doubler Versus Sparring with Preference Based Regret with 46 Arms}
+%\end{figure}
+%\newpage
+%\subsection{Balanced Doubler}
+%Now lets have a look at the Balanced Doubler algorithm using the same data set.
+%\begin{figure}[h!]
+%  \centering
+%     \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/balanced_doubler_sparring_MQ2007_16arms.png} 
+%  \caption{Balanced Doubler Versus Sparring with Utility Based Regret with 16 Arms}
+%\end{figure}
+%
+%\subsection{Thompson Sampling Doubler}
+%Now lets have a look at the Balanced Doubler algorithm using the same data set.
+%\begin{figure}[h!]
+%\centering
+%\begin{subfigure}{.5\textwidth}
+%  \centering
+%  \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/improved_doubler_TS_sparring_MQ2007_7arms.png}
+%  \caption{7 Arms}
+%  \label{fig:sub1}
+%\end{subfigure}%
+%\begin{subfigure}{.5\textwidth}
+%  \centering
+%  \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/improved_doubler_TS_sparring_MQ2007_16arms.png}
+%  \caption{16 Arms}
+%  \label{fig:sub2}
+%\end{subfigure}
+%\begin{subfigure}{.5\textwidth}
+%  \centering
+%  \includegraphics[scale=0.3, natwidth=410,natheight=442]{figures/improved_doubler_TS_sparring_MQ2007_46arms.png}
+%  \caption{46 Arms}
+%  \label{fig:sub2}
+%\end{subfigure}
+%\caption{Improved Doubler Versus Sparring with Utility Based Regret}
+%\label{fig:test}
+%\end{figure}
+%
+%The general regret:
+%\begin{figure}[h!]
+%  \centering
+%     \includegraphics[scale=0.4, natwidth=410,natheight=442]{figures/improved_doubler_TS_sparring_MQ2007_general.png} 
+%  \caption{Improved Doubler Versus Sparring with Preference Based Regret with 46 Arms}
+%\end{figure}
+%
+%\subsection{Thompson Sampling Sparring}
+%And finally, lets show the results of  the sparring algorithm when using Thompson Sampling black boxes.
+%
+%\begin{figure}[h!]
+%  \centering
+%     \includegraphics[scale=0.4, natwidth=410,natheight=442]{figures/TS_sparring_sparring_MQ2007_16arms.png} 
+%  \caption{Thompson Sampling Sparring Versus Sparring with Utility Based Regret with 16 Arms}
+%\end{figure}
+%
+%The general regret:
+%\begin{figure}[h!]
+%  \centering
+%     \includegraphics[scale=0.4, natwidth=410,natheight=442]{figures/TS_sparring_sparring_MQ2007_general.png} 
+%  \caption{Thompson Sampling Sparring Versus Sparring with Preference Based Regret with 46 Arms}
+%\end{figure}
 
 \end{document}
